@@ -1,0 +1,1984 @@
+{
+ "slug": "expresscart",
+ "name": "expressCart",
+ "rerun": false,
+ "repo": "https://github.com/mrvautin/expressCart",
+ "blurb": "An open-source Node.js shop with MongoDB, about 2.2k GitHub stars. PayPal through the deprecated v1 Payments redirect (paypal-rest-sdk).",
+ "beforeNote": null,
+ "modeNote": null,
+ "shotNote": null,
+ "stack": {
+  "before": "Original (v1 Payments redirect, paypal-rest-sdk)",
+  "after": "Upgraded (Orders v2 + JS SDK v6 + paypal-server-sdk)"
+ },
+ "intro": "This moves expressCart's PayPal checkout off the deprecated v1 Payments redirect (`paypal-rest-sdk`) onto Orders v2 with `@paypal/paypal-server-sdk` on the server and a JS SDK v6 `<paypal-button>` in the browser. Each PayPal order is priced from the session's current cart on the server and bound to an order document holding exactly that cart; an order becomes Paid only when PayPal reports a completed capture for it, in the order's amount and currency.",
+ "runsNote": "Every row is a real PayPal sandbox run through the shop's own server and pages, with a real sandbox buyer approving on PayPal. The shop's record is its MongoDB `orders.orderStatus`; PayPal's is `GET /v1/payments/payment/{id}` (before) or `GET /v2/checkout/orders/{id}` (after). The pending-capture row is SIMULATED: the harness rewrites PayPal's answer to PENDING before the shop sees it (no sandbox route produces a pending capture with the account's default settings).",
+ "harnessNote": "Test harness (not part of this change): a Node preload that adds `PayPal-Mock-Response`, drops a response, or (labelled SIMULATED) rewrites a capture to PENDING on the shop server's PayPal calls and logs every PayPal call; it also feeds the sandbox credentials to the original's config file from the process environment. A standalone MongoDB 6.0 and a Playwright sandbox buyer.",
+ "modes": [
+  "default"
+ ],
+ "runs": {
+  "before": [
+   {
+    "mode": "default",
+    "commit": "upstream b31302f",
+    "at": "2026-10-17T17:03:44.878Z"
+   }
+  ],
+  "after": [
+   {
+    "mode": "default",
+    "commit": "b35789e",
+    "at": "2026-10-19T08:52:38.570Z"
+   }
+  ]
+ },
+ "tally": {
+  "before": {
+   "pass": 6,
+   "fail": 4,
+   "na": 5,
+   "inconclusive": 0,
+   "total": 15
+  },
+  "after": {
+   "pass": 15,
+   "fail": 0,
+   "na": 0,
+   "inconclusive": 0,
+   "total": 15
+  }
+ },
+ "failures": [
+  {
+   "id": "cancel-shrink",
+   "code": "E1",
+   "mode": "default",
+   "headline": "The buyer paid €85.00. The shop marked the €480.00 order Paid, with all 8 items in it.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/expresscart/crop-original-default-cancel-shrink-order-6ad3a9877f58f475e18c41b7.png",
+    "caption": "The shop's admin order page: order status and total"
+   }
+  },
+  {
+   "id": "duplicate",
+   "code": "E7",
+   "mode": "default",
+   "headline": "One reload of PayPal's return page crashed the shop process for every customer.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/expresscart/crop-original-default-duplicate-order-6ad3a9d47f58f475e18c41c4.png",
+    "caption": "The shop's admin order page: order status and total"
+   }
+  },
+  {
+   "id": "lost-response",
+   "code": "E8",
+   "mode": "default",
+   "headline": "The buyer was charged €73.00. The shop crashed, came back without PayPal credentials, and never marked the order paid.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/expresscart/crop-original-default-lost-response-order-6ad3aa08d7721c7a32ce63a0.png",
+    "caption": "The shop's admin order page: order status and total"
+   }
+  },
+  {
+   "id": "pending-simulated",
+   "code": "E2",
+   "mode": "default",
+   "headline": "A pending payment, which is not yet money, was marked Paid.",
+   "assumed": null,
+   "simulated": "pending",
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/expresscart/crop-original-default-pending-simulated-order-6ad3aa5e8316de7c149e72ee.png",
+    "caption": "The shop's admin order page: order status and total"
+   }
+  }
+ ],
+ "heroId": "cancel-shrink",
+ "scenarios": [
+  {
+   "id": "happy",
+   "title": "Happy path, PayPal wallet",
+   "ref": "#1",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 23.4,
+      "shopOrderId": "6ad3a9687f58f475e18c41b3",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2S2Q29Y57880TN361063H",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "9BK795924A644125Y",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "d3742eab4d77d",
+       "c4db83cac97f0",
+       "7112f8eaba09c"
+      ],
+      "notes": [
+       "buyer approved and paid"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-happy-order-6ad3a9687f58f475e18c41b3.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 23.4,
+      "shopOrderId": "6ad5d91af2ed46ac067f1f62",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "9D507931PA911150A",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "1N055959NS9217418",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f7215146e3af6",
+       "f247102c53daf",
+       "f2471025bf9c7",
+       "f272988aa24f4"
+      ],
+      "notes": [
+       "buyer approved and paid"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-happy-order-6ad5d91af2ed46ac067f1f62.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "happy-ui",
+   "title": "Happy path through the shop's own v6 PayPal button",
+   "ref": "#1",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original's only button is the redirect form, which every original scenario already drives"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.6,
+      "shopOrderId": "6ad5d932f2ed46ac067f1f65",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "48G018149P602980G",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "1DY38691GY3624114",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser → GET /paypal/client-token",
+        "http": 200
+       },
+       {
+        "step": "browser → GET /paypal/client-token",
+        "http": 200
+       },
+       {
+        "step": "browser → POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "browser → POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f8925766c090d",
+       "f9906108f2f7f"
+      ],
+      "notes": [
+       "PayPal opened in a popup",
+       "buyer: approved (login,card,approve,done)"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-happy-ui-order-6ad5d932f2ed46ac067f1f65.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "cancel-shrink",
+   "title": "Cancel at PayPal, shrink the cart, pay the smaller total (E1)",
+   "ref": "#3 + #11b",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "shop marked order 6ad3a9877f58f475e18c41b7 paid; PayPal captured 85.00 EUR, shop total is 480.00 EUR (I3)",
+       "order 6ad3a9877f58f475e18c41b7 is marked Paid but holds 4x Red Wing Iron Ranger Boot + 4x Duckworth Woolfill Jacket (480.00 EUR); the cart the buyer paid for was 1 item(s), 85.00 EUR (E1)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 40.6,
+      "shopOrderId": "6ad3a9877f58f475e18c41b7",
+      "shopTotal": "480.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2TCA6R18005817477390L",
+        "status": "CREATED",
+        "captures": []
+       },
+       {
+        "orderId": "PAYID-NLJ2TFA5BY80765E5907343Y",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "75N09877CY725640L",
+          "status": "COMPLETED",
+          "amount": "85.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "buyer cancels at PayPal (Cancel and return) → GET /paypal/checkout_cancel",
+        "http": 302
+       },
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "67c4a28c3c4a0",
+       "203e921cdee92",
+       "26ef8f3822c7b"
+      ],
+      "notes": [
+       "first cart 480.00 EUR (2 items), cancelled at PayPal; paid cart 85.00 EUR (1 items)",
+       "shop order 6ad3a9877f58f475e18c41b7: Paid, 4x Red Wing Iron Ranger Boot + 4x Duckworth Woolfill Jacket, total 480.00 EUR"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-cancel-shrink-order-6ad3a9877f58f475e18c41b7.png",
+      "timeline": [
+       {
+        "t": 0,
+        "step": "open the shop in a fresh browser"
+       },
+       {
+        "t": 9.2,
+        "step": "add 4x Ranger boot and 4x Duckworth jacket to the cart"
+       },
+       {
+        "t": 9.5,
+        "step": "checkout: shipping details, payment page shows 480.00 EUR",
+        "shot": "data/shots/expresscart/original-default-e1-1-payment-big-cart.png"
+       },
+       {
+        "t": 12.1,
+        "step": "click Pay with PayPal: PAYID-NLJ2TCA6R18005817477390L created for 480.00 EUR; shop order 6ad3a9877f58f475e18c41b7"
+       },
+       {
+        "t": 14.4,
+        "step": "buyer cancels at PayPal and is sent back to the shop",
+        "shot": "data/shots/expresscart/original-default-e1-2-paypal-cancel.png"
+       },
+       {
+        "t": 20,
+        "step": "buyer removes the boots and lowers the jackets to 1",
+        "shot": "data/shots/expresscart/original-default-e1-3-cart-shrunk.png"
+       },
+       {
+        "t": 20.3,
+        "step": "payment page now shows 85.00 EUR",
+        "shot": "data/shots/expresscart/original-default-e1-4-payment-small-cart.png"
+       },
+       {
+        "t": 22.2,
+        "step": "click Pay with PayPal again: PAYID-NLJ2TFA5BY80765E5907343Y for 85.00 EUR; shop order 6ad3a9877f58f475e18c41b7"
+       },
+       {
+        "t": 36.3,
+        "step": "buyer logs in and pays 85.00 EUR at PayPal",
+        "shot": "data/shots/expresscart/original-default-e1-5-paypal-approve.png"
+       },
+       {
+        "t": 36.4,
+        "step": "back at the shop: payment result page",
+        "shot": "data/shots/expresscart/original-default-e1-6-return.png"
+       },
+       {
+        "t": 37.4,
+        "step": "shop admin: order 6ad3a9877f58f475e18c41b7 is Paid, total 480.00 EUR, 4x Red Wing Iron Ranger Boot + 4x Duckworth Woolfill Jacket",
+        "shot": "data/shots/expresscart/original-default-e1-7-admin-order.png"
+       }
+      ]
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 37.4,
+      "shopOrderId": "6ad5d94ff2ed46ac067f1f68",
+      "shopTotal": "85.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "88A45559GU2002359",
+        "status": "CREATED",
+        "captures": []
+       },
+       {
+        "orderId": "0D595284395066028",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "11288360PE069381H",
+          "status": "COMPLETED",
+          "amount": "85.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "buyer closes the PayPal window without paying (88A45559GU2002359 stays unapproved)",
+        "http": 0
+       },
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f901549716688",
+       "f24854008e5fd",
+       "f381384bee2a0"
+      ],
+      "notes": [
+       "first cart 480.00 EUR (2 items), cancelled at PayPal; paid cart 85.00 EUR (1 items)",
+       "shop order 6ad5d94ff2ed46ac067f1f68: Paid, 1x Duckworth Woolfill Jacket, total 85.00 EUR"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-cancel-shrink-order-6ad5d94ff2ed46ac067f1f68.png",
+      "timeline": [
+       {
+        "t": 0,
+        "step": "open the shop in a fresh browser"
+       },
+       {
+        "t": 9.2,
+        "step": "add 4x Ranger boot and 4x Duckworth jacket to the cart"
+       },
+       {
+        "t": 9.7,
+        "step": "checkout: shipping details, payment page shows 480.00 EUR",
+        "shot": "data/shots/expresscart/upgraded-default-e1-1-payment-big-cart.png"
+       },
+       {
+        "t": 11,
+        "step": "checkout calls POST /paypal/orders (what the v6 button calls): 88A45559GU2002359 created for 480.00 EUR; shop order 6ad5d94ff2ed46ac067f1f68"
+       },
+       {
+        "t": 11,
+        "step": "buyer closes the PayPal window without paying"
+       },
+       {
+        "t": 16.5,
+        "step": "buyer removes the boots and lowers the jackets to 1",
+        "shot": "data/shots/expresscart/upgraded-default-e1-3-cart-shrunk.png"
+       },
+       {
+        "t": 16.9,
+        "step": "payment page now shows 85.00 EUR",
+        "shot": "data/shots/expresscart/upgraded-default-e1-4-payment-small-cart.png"
+       },
+       {
+        "t": 17.6,
+        "step": "checkout calls POST /paypal/orders (what the v6 button calls) again: 0D595284395066028 for 85.00 EUR; shop order 6ad5d94ff2ed46ac067f1f68"
+       },
+       {
+        "t": 32.2,
+        "step": "buyer logs in and pays 85.00 EUR at PayPal",
+        "shot": "data/shots/expresscart/upgraded-default-e1-5-paypal-approve.png"
+       },
+       {
+        "t": 32.3,
+        "step": "back at the shop: payment result page",
+        "shot": "data/shots/expresscart/upgraded-default-e1-6-return.png"
+       },
+       {
+        "t": 33.3,
+        "step": "shop admin: order 6ad5d94ff2ed46ac067f1f68 is Paid, total 85.00 EUR, 1x Duckworth Woolfill Jacket",
+        "shot": "data/shots/expresscart/upgraded-default-e1-7-admin-order.png"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "unapproved",
+   "title": "Complete a payment the buyer never approved",
+   "ref": "#7a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 8.6,
+      "shopOrderId": "6ad3a9a77f58f475e18c41bc",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "created",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2TKA336407263N471313C",
+        "status": "CREATED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return with no approval (made-up PayerID)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "9014921638b65",
+       "c384fee6a1385"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-unapproved-order-6ad3a9a77f58f475e18c41bc.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 6.6,
+      "shopOrderId": "6ad5d96cf2ed46ac067f1f6c",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8RV82953HW9927133",
+        "status": "CREATED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f5662990fade7",
+       "f566299a76539"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-unapproved-order-6ad5d96cf2ed46ac067f1f6c.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "declined-retry",
+   "title": "Declined instrument, then a retry that works",
+   "ref": "#5",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 36,
+      "shopOrderId": "6ad3a9b07f58f475e18c41bf",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2TMQ79636671127014453",
+        "status": "CREATED",
+        "captures": []
+       },
+       {
+        "orderId": "PAYID-NLJ2TRY0GS31445XC986742H",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "2GE580812G611621Y",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       },
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [
+       "INSTRUMENT_DECLINED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "b8d1636e6f809",
+       "522407423d172",
+       "66717a5cb3363",
+       "1f67532d12932"
+      ],
+      "notes": [
+       "first completion mocked INSTRUMENT_DECLINED",
+       "buyer went back to checkout and paid again"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-declined-retry-order-6ad3a9b07f58f475e18c41bf.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.8,
+      "shopOrderId": "6ad5d973f2ed46ac067f1f6f",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "17J93626HD060173L",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "99N25824VH795103L",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INSTRUMENT_DECLINED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f2125602ab362",
+       "f550650c47b16",
+       "f550650530973"
+      ],
+      "notes": [
+       "first completion mocked INSTRUMENT_DECLINED",
+       "capture retried unmocked"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-declined-retry-order-6ad5d973f2ed46ac067f1f6f.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "duplicate",
+   "title": "Duplicate completion (reload of the return page / double click)",
+   "ref": "#8a",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "shop process exited (code 1): the whole shop went down for every customer (E7)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 23.9,
+      "shopOrderId": "6ad3a9d47f58f475e18c41c4",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2TVQ25U68119HX553480X",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "9BY74857A9272122W",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return again (buyer reloads the return page)",
+        "http": 0
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "8822363b0d50d",
+       "67a723ed6909a",
+       "8baaf4464f4a0"
+      ],
+      "notes": [
+       "buyer paid, then reloaded the PayPal return page",
+       "shop process exited (code 1); harness restarted it"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-duplicate-order-6ad3a9d47f58f475e18c41c4.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.3,
+      "shopOrderId": "6ad5d988f2ed46ac067f1f72",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "6H477809GA9949630",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "19N54557XS4862223",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f21463016f796",
+       "f133796b45a1a"
+      ],
+      "notes": [
+       "two concurrent captures, then a third"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-duplicate-order-6ad5d988f2ed46ac067f1f72.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "server-error-retry",
+   "title": "PayPal 500 on completion, then a retry",
+   "ref": "#9b",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 28.7,
+      "shopOrderId": "6ad3a9ecd7721c7a32ce639b",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2T3I1GF20003322060645",
+        "status": "CREATED",
+        "captures": []
+       },
+       {
+        "orderId": "PAYID-NLJ2T6Q99H16128UR712584F",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "1MT71096GU655812T",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       },
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [
+       "INTERNAL_SERVER_ERROR"
+      ],
+      "harness": [],
+      "debugIds": [
+       "4a8cb29ae9bcc",
+       "22407bc70635a",
+       "610ab802004a3",
+       "ad67953bdecea"
+      ],
+      "notes": [
+       "first completion mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed)",
+       "buyer went back to checkout and paid again"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-server-error-retry-order-6ad3a9ecd7721c7a32ce639b.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.5,
+      "shopOrderId": "6ad5d99df2ed46ac067f1f75",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "68C7602201708451N",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "99784716B17300937",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 502
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INTERNAL_SERVER_ERROR"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f31989566257e",
+       "f270444dd6c55",
+       "f270444529795"
+      ],
+      "notes": [
+       "first completion mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed)",
+       "capture retried unmocked"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-server-error-retry-order-6ad5d99df2ed46ac067f1f75.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "lost-response",
+   "title": "Completion succeeds at PayPal, its response is lost, then a retry",
+   "ref": "#9a",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (1RR16568FL4917301 73.00 EUR) but shop order 6ad3aa08d7721c7a32ce63a0 is not confirmed (I4)",
+       "expected order 6ad3aa08d7721c7a32ce63a0 paid once; it is created (I6)",
+       "shop process exited (code 1): the whole shop went down for every customer (E7)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 47.7,
+      "shopOrderId": "6ad3aa08d7721c7a32ce63a0",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "created",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2UCI11E75809KE095821R",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "1RR16568FL4917301",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 0
+       },
+       {
+        "step": "GET /paypal/checkout_return again (buyer reloads the return page)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [
+       "harness: response dropped after PayPal processed the call"
+      ],
+      "debugIds": [
+       "90107c5f632cc",
+       "7f86b5f11ca16",
+       "6a41fde74d8fe"
+      ],
+      "notes": [
+       "PayPal processed the first completion; its response was dropped before the shop's code saw it",
+       "shop process exited (code 1); harness restarted it",
+       "buyer reloaded the return page"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-lost-response-order-6ad3aa08d7721c7a32ce63a0.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.2,
+      "shopOrderId": "6ad5d9b2f2ed46ac067f1f78",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "5WY1380077994662Y",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9WB04430KM366413C",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 502
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [
+       "harness: response dropped after PayPal processed the call"
+      ],
+      "debugIds": [
+       "f201536909f0e",
+       "f25404582fafd",
+       "f4524496299fa"
+      ],
+      "notes": [
+       "PayPal processed the first completion; its response was dropped before the shop's code saw it",
+       "capture retried"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-lost-response-order-6ad5d9b2f2ed46ac067f1f78.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "currency",
+   "title": "Same amount, cheaper currency (MXN), handed to the shop's capture",
+   "ref": "#11a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the v1 redirect executes only the payment id stored in the buyer's session, so a foreign payment cannot be handed to the shop"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.7,
+      "shopOrderId": "6ad5d9c8f2ed46ac067f1f7b",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "4JD74082BW214945H",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "1BN672808H939933A",
+          "status": "COMPLETED",
+          "amount": "73.00 MXN"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f503381f9ace4"
+      ],
+      "notes": [
+       "attacker created 4JD74082BW214945H for 73.00 MXN with custom_id 6ad5d9c8f2ed46ac067f1f7b (debug f2694782295b6)",
+       "attacker captured: HTTP 201, capture 1BN672808H939933A COMPLETED 73.00 MXN"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-currency-order-6ad5d9c8f2ed46ac067f1f7b.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "amount",
+   "title": "Lower amount (1.00), handed to the shop's capture",
+   "ref": "#11a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the v1 redirect executes only the payment id stored in the buyer's session, so a foreign payment cannot be handed to the shop"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.8,
+      "shopOrderId": "6ad5d9daf2ed46ac067f1f7e",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8BK23248267451448",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "4L508787GC750325J",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f468200e0c199"
+      ],
+      "notes": [
+       "attacker created 8BK23248267451448 for 1.00 EUR with custom_id 6ad5d9daf2ed46ac067f1f7e (debug f659807dd1267)",
+       "attacker captured: HTTP 201, capture 4L508787GC750325J COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-amount-order-6ad5d9daf2ed46ac067f1f7e.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "two-tabs",
+   "title": "Two checkouts for one cart (two tabs), both approved",
+   "ref": "#8",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 32.6,
+      "shopOrderId": "6ad3aa398316de7c149e72e9",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2UOQ97L63206112081105",
+        "status": "CREATED",
+        "captures": []
+       },
+       {
+        "orderId": "PAYID-NLJ2UPA72D97207FH786845A",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "5MU20921L7643134F",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "bd7ef07d5dfc3",
+       "cb76b734b85f5",
+       "668066ca48f92",
+       "a624232b23335"
+      ],
+      "notes": [
+       "tab A and tab B each went to PayPal; the buyer approved A, then B"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-two-tabs-order-6ad3aa398316de7c149e72e9.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 35.3,
+      "shopOrderId": "6ad5d9edf2ed46ac067f1f81",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "83J91784F1639063B",
+        "status": "APPROVED",
+        "captures": []
+       },
+       {
+        "orderId": "5WW63888ER412344G",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "1TT055121Y177533H",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 404
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f12179044e210",
+       "f12179077d750",
+       "f385374e2b108"
+      ],
+      "notes": [
+       "both tabs approved, then both captured at the same time"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-two-tabs-order-6ad5d9edf2ed46ac067f1f81.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "create-refused",
+   "title": "PayPal refuses to create the payment",
+   "ref": "#4",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 5.3,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": "new",
+      "shopAfter": "no order",
+      "shopPaid": false,
+      "paypal": [],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET / (shop still serving)",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "TRANSACTION_REFUSED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "9fc31d91b5108"
+      ],
+      "notes": [
+       "create answered 302"
+      ],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 4,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": "new",
+      "shopAfter": "no order",
+      "shopPaid": false,
+      "paypal": [],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 422
+       },
+       {
+        "step": "GET / (shop still serving)",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_CANNOT_PAY"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f1701023bdfff"
+      ],
+      "notes": [
+       "create answered 422"
+      ],
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "pending-simulated",
+   "title": "Pending capture (SIMULATED: the harness rewrites PayPal's answer to PENDING)",
+   "ref": "#10 (simulated)",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "SIMULATED pending capture: judged as if PayPal had answered PENDING",
+       "shop marked order 6ad3aa5e8316de7c149e72ee paid; PayPal shows no completed capture: PAYID-NLJ2UXY8MA43559YA899225G APPROVED [0L984894A7739215B PENDING 73.00 EUR] (I2)",
+       "expected order 6ad3aa5e8316de7c149e72ee not paid; shop says Paid (I6)"
+      ],
+      "cause": null,
+      "simulated": "pending",
+      "seconds": 20.1,
+      "shopOrderId": "6ad3aa5e8316de7c149e72ee",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Paid",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "PAYID-NLJ2UXY8MA43559YA899225G",
+        "status": "APPROVED",
+        "captures": [
+         {
+          "id": "0L984894A7739215B",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/checkout_action (the shop's Pay with PayPal form)",
+        "http": 302
+       },
+       {
+        "step": "GET /paypal/checkout_return (PayPal sends the buyer back; the shop executes the payment)",
+        "http": 302
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "8e4f48e63c679",
+       "1a0a901ffb474"
+      ],
+      "notes": [
+       "SIMULATED: every PayPal response the shop received after approval had its COMPLETED capture / completed sale rewritten to PENDING (reason RECEIVING_PREFERENCE_MANDATES_MANUAL_ACTION) by the test harness; PayPal's real record shows the money captured"
+      ],
+      "screenshot": "data/shots/expresscart/original-default-pending-simulated-order-6ad3aa5e8316de7c149e72ee.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED pending capture: judged as if PayPal had answered PENDING"
+      ],
+      "cause": null,
+      "simulated": "pending",
+      "seconds": 20.8,
+      "shopOrderId": "6ad5da43f2ed46ac067f1f8c",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "5ND34356JA630204C",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "2US30207PM596981P",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f250263ae8ec3",
+       "f3187381d8aab"
+      ],
+      "notes": [
+       "SIMULATED: every PayPal response the shop received after approval had its COMPLETED capture / completed sale rewritten to PENDING (reason RECEIVING_PREFERENCE_MANDATES_MANUAL_ACTION) by the test harness; PayPal's real record shows the money captured"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-pending-simulated-order-6ad5da43f2ed46ac067f1f8c.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "currency-own",
+   "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+   "ref": "#11b",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the harness rewrites amounts in Orders v2 answers only; the original's v1 sale answers are not rewritten"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED currency MXN on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "currency MXN",
+      "seconds": 22.7,
+      "shopOrderId": "6ad5da14f2ed46ac067f1f86",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "1BH47448N7840870F",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "52T726204V136170P",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f100774bd0e20",
+       "f6686284aa085"
+      ],
+      "notes": [
+       "SIMULATED: while the shop completed 1BH47448N7840870F, PayPal's answers to the shop's server reported currency MXN for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 52T726204V136170P (73.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 1RB109403V892874H COMPLETED"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-currency-own-order-6ad5da14f2ed46ac067f1f86.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "amount-own",
+   "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+   "ref": "#11b",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "default",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the harness rewrites amounts in Orders v2 answers only; the original's v1 sale answers are not rewritten"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED amount 1.00 on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "amount 1.00",
+      "seconds": 23.5,
+      "shopOrderId": "6ad5da2bf2ed46ac067f1f89",
+      "shopTotal": "73.00 EUR",
+      "shopBefore": "new",
+      "shopAfter": "Pending",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "9EW37032JP7824242",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "6VR14533AG084245N",
+          "status": "COMPLETED",
+          "amount": "73.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f2524522fdd77",
+       "f8778162b71cf"
+      ],
+      "notes": [
+       "SIMULATED: while the shop completed 9EW37032JP7824242, PayPal's answers to the shop's server reported amount 1.00 for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 6VR14533AG084245N (73.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 5FR21861830887047 COMPLETED"
+      ],
+      "screenshot": "data/shots/expresscart/upgraded-default-amount-own-order-6ad5da2bf2ed46ac067f1f89.png",
+      "timeline": null
+     }
+    }
+   ]
+  }
+ ],
+ "diff": {
+  "files": [
+   {
+    "file": "config/payment/schema/paypal.json",
+    "added": 0,
+    "removed": 3
+   },
+   {
+    "file": "lib/payments/paypal.js",
+    "added": 522,
+    "removed": 184
+   },
+   {
+    "file": "package.json",
+    "added": 1,
+    "removed": 1
+   },
+   {
+    "file": "public/javascripts/paypal.js",
+    "added": 197,
+    "removed": 0
+   },
+   {
+    "file": "views/partials/payments/paypal.hbs",
+    "added": 6,
+    "removed": 6
+   }
+  ],
+  "added": 726,
+  "removed": 194,
+  "commits": [
+   "b35789e upgrade: JS SDK v6 + @paypal/paypal-server-sdk (model finished)"
+  ]
+ },
+ "scan": {
+  "before": [
+   {
+    "rule": "rest-sdk-v1",
+    "kind": "deprecated",
+    "file": "lib/payments/paypal.js",
+    "line": 6,
+    "text": "const paypal = require('paypal-rest-sdk');",
+    "why": "paypal-rest-sdk (v1 Payments) is deprecated; use Orders v2 via @paypal/paypal-server-sdk"
+   },
+   {
+    "rule": "v1-approved-state",
+    "kind": "risk",
+    "file": "lib/payments/paypal.js",
+    "line": 51,
+    "text": "if(payment.state === 'approved'){",
+    "why": "v1 payment state 'approved' is not a completed sale (SCENARIOS #10)"
+   },
+   {
+    "rule": "no-capture-status-check",
+    "kind": "risk",
+    "file": "lib/payments/paypal.js",
+    "line": 22,
+    "text": "paypal.payment.execute(paymentId, details, async(error, payment) => {",
+    "why": "reads or captures a PayPal order, and no file in the repo looks at the capture's status (SCENARIOS #7, #10: paid without a completed capture)"
+   },
+   {
+    "rule": "capture-no-request-id",
+    "kind": "risk",
+    "file": "lib/payments/paypal.js",
+    "line": 22,
+    "text": "paypal.payment.execute(paymentId, details, async(error, payment) => {",
+    "why": "capture sent without a PayPal-Request-Id: if the response is lost, a retry cannot be safely replayed (SCENARIOS #8, #9)"
+   },
+   {
+    "rule": "rest-sdk-v1",
+    "kind": "deprecated",
+    "file": "package.json",
+    "line": 67,
+    "text": "\"paypal-rest-sdk\": \"^1.6.9\",",
+    "why": "paypal-rest-sdk (v1 Payments) is deprecated; use Orders v2 via @paypal/paypal-server-sdk"
+   }
+  ],
+  "after": []
+ },
+ "arms": [
+  {
+   "arm": "",
+   "label": "Full prompt",
+   "prompt": "Migration plus the proof contract and the money rules (bind each PayPal order to one shop order, check capture status, amount and currency, idempotent capture).",
+   "steps": [
+    {
+     "kind": "upgrade",
+     "step": "upgrade",
+     "commit": "b35789e",
+     "at": "2026-10-17T16:52:24.101Z",
+     "byHand": false,
+     "turns": 82,
+     "seconds": 698,
+     "skills": [
+      "paypal-server-sdk:typescript-error-handling",
+      "paypal-server-sdk:typescript-calling-endpoints",
+      "paypal-server-sdk:typescript-client-initialization",
+      "paypal:paypal-best-practices",
+      "paypal-server-sdk:typescript-getting-started"
+     ],
+     "summary": "The PayPal integration is moved to Orders v2 on the server and JS SDK v6 in the browser, with fixes for E1–E7. None of it has run: I didn't start the app or MongoDB, and I couldn't run `node -e` or eslint (both need approval). What I did check: both JS files pass `node --check`, every SDK name I use is exported by the installed package, and `npm ls` shows `@paypal/paypal-server-sdk@2.5.0` and no `paypal-rest-sdk`.\n\n## Files changed\n- **`lib/payments/paypal.js`**: rewritten. One PayPal client is built from `PAYPAL_CLIENT_ID`/`PAYPAL_CLIENT_SECRET`, on Sandbox unless `PAYPAL_ENVIRONMENT=live`, with a 30 s timeout; credentials are never logged. It has these routes:\n  - `GET /paypal/client-token` returns a browser-safe token for SDK v6.\n  - `POST /paypal/orders` creates the order.\n  - `POST /paypal/orders/:id/capture` captures it.\n  - The old `checkout_action`, `checkout_return` and `checkout_cancel` routes now only redirect to `/checkout/payment`.\n- **`views/partials/payments/paypal.hbs`**: a `<paypal-button>` (hidden until the SDK is ready), a message box, and the script below.\n- **`public/javascripts/paypal.js`** (new): plain JS. It loads the v6 core script, then calls `createInstance`, `findEligibleMethods` and `createPayPalOneTimePaymentSession`, and starts the session with `start({presentationMode:'auto'}, createOrder())`. After a COMPLETED or PENDING capture it goes to `/pay",
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "b35789e",
+     "at": "2026-10-17T16:58:19.644Z",
+     "pass": 13,
+     "fail": [],
+     "buildError": false,
+     "note": null,
+     "harness": false
+    }
+   ],
+   "later": null
+  },
+  {
+   "arm": "plain",
+   "label": "Plain prompt",
+   "prompt": "Migrate only: move to Orders v2, JS SDK v6 and @paypal/paypal-server-sdk, keep the proof contract. No money rules. Anything it gets right about money comes from the model or from the evidence fed back to it.",
+   "steps": [
+    {
+     "kind": "upgrade",
+     "step": "upgrade (plain prompt: migrate only)",
+     "commit": "8224647",
+     "at": "2026-10-17T17:21:22.884Z",
+     "byHand": false,
+     "turns": 76,
+     "seconds": 479,
+     "skills": [
+      "paypal-server-sdk:typescript-configuration-resilience",
+      "paypal:paypal-best-practices",
+      "paypal-server-sdk:typescript-error-handling",
+      "paypal-server-sdk:typescript-calling-endpoints",
+      "paypal-server-sdk:typescript-authentication",
+      "paypal-server-sdk:typescript-client-initialization",
+      "paypal-server-sdk:typescript-getting-started"
+     ],
+     "summary": "The shop now uses Orders v2 through `@paypal/paypal-server-sdk` on the server and a JS SDK v6 `<paypal-button>` in the browser. Nothing has been run: the brief rules out the app and MongoDB, and ESLint, `node -e` and `git status` all needed an approval I didn't get. The code is checked only against the installed SDK source (2.5.0), not executed.\n\n**Endpoints**\n- **`GET /paypal/client-token`** returns `{clientToken, environment}` for v6 `createInstance({ clientToken })`. It's fetched through the SDK's `OAuthAuthorizationController` and cached until 5 minutes before it expires.\n- **`POST /paypal/orders`** recalculates the cart total on the server and creates or updates the expressCart order with status \"Pending\". It then creates a PayPal order (intent CAPTURE, expressCart `_id` as `custom_id`) and returns `{id, orderId}`.\n- **`POST /paypal/orders/:id/capture`** captures, records the transaction, sets `orderStatus` to \"Paid\", empties the cart, sends the email and returns `{status:\"COMPLETED\", orderId, captureId}`.\n  - A second capture of the same order returns the stored result. If PayPal says the order was already captured, the server reads it back and records it.\n  - Errors return `{error, debug_id, action}`: `INSTRUMENT_DECLINED` gives `restart`, `PAYER_ACTION_REQUIRED` gives `payer-action`, anything else gives `fail`.\n  - On `restart` or `payer-action`, the buyer's next click ",
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "8224647",
+     "at": "2026-10-17T17:27:00.963Z",
+     "pass": 13,
+     "fail": [],
+     "buildError": false,
+     "note": null,
+     "harness": false
+    }
+   ],
+   "later": {
+    "commit": "8224647",
+    "at": "2026-10-19T09:30:25.535Z",
+    "added": [
+     "currency-own",
+     "amount-own"
+    ],
+    "modes": [
+     {
+      "mode": "default",
+      "pass": 13,
+      "na": 0,
+      "inconclusive": 0,
+      "total": 15,
+      "fail": [
+       {
+        "id": "currency-own",
+        "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+        "simulated": true,
+        "reason": "shop marked order 6ad5e2f09403cdfc5867facc paid; PayPal captured 73.00 MXN, shop total is 73.00 EUR (I3)"
+       },
+       {
+        "id": "amount-own",
+        "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+        "simulated": true,
+        "reason": "shop marked order 6ad5e3089403cdfc5867fad0 paid; PayPal captured 1.00 EUR, shop total is 73.00 EUR (I3)"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "catches": [],
+ "mutations": [
+  {
+   "name": "no-own-money-check",
+   "description": "the capture's money check removed (sameMoney on PayPal's order and capture in applyPaypalOrder): any captured amount and currency mark the order paid",
+   "commit": "b35789e+mutation:no-own-money-check",
+   "at": "2026-10-19T09:24:50.977Z",
+   "mode": "default",
+   "results": [
+    {
+     "id": "currency-own",
+     "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 6ad5e1b1224274f42a67f89f paid; PayPal captured 73.00 MXN, shop total is 73.00 EUR (I3)"
+    },
+    {
+     "id": "amount-own",
+     "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 6ad5e1cc224274f42a67f8a2 paid; PayPal captured 1.00 EUR, shop total is 73.00 EUR (I3)"
+    }
+   ]
+  }
+ ]
+}

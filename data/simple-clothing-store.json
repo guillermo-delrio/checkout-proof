@@ -1,0 +1,5340 @@
+{
+ "slug": "simple-clothing-store",
+ "name": "simple-clothing-store",
+ "rerun": true,
+ "repo": "https://github.com/kerkkoh/simple-clothing-store",
+ "blurb": "A small React + Express store with Printful fulfilment. PayPal through JS SDK v5 in the browser and the deprecated @paypal/checkout-server-sdk.",
+ "beforeNote": "In the original shop's runs, the harness's own PayPal client plays the browser half (creating and capturing the PayPal order, as the shop's v5 button code does); the shop's own server handles the rest.",
+ "modeNote": "Demo mode is the store's published demo setting (DEMO=1); production mode switches on its Printful order hand-off.",
+ "shotNote": "This shop's pages label every price \"$ USD\"; its orders are in EUR.",
+ "stack": {
+  "before": "Original (v5 + checkout-server-sdk)",
+  "after": "Upgraded (v6 + paypal-server-sdk)"
+ },
+ "intro": "This moves simple-clothing-store off JS SDK v5 (`react-paypal-button-v2`) and the deprecated `@paypal/checkout-server-sdk` onto JS SDK v6 and `@paypal/paypal-server-sdk`. Orders are created and captured on the server from the shop's own prices, and an order is confirmed only when PayPal reports a completed capture for an order this server created for it, in the shop's amount and currency.",
+ "runsNote": "Every row is a real PayPal sandbox run through this app's own server, in both the published demo mode (`DEMO=1`) and production mode (Printful confirm, against a local Printful stub). IDs are sandbox order IDs with their captures as PayPal's `GET /v2/checkout/orders/{id}` reports them.",
+ "harnessNote": "Test harness (not part of this change): a Node preload that adds `PayPal-Mock-Response` or drops a response on the shop server's next PayPal call and logs every PayPal call, a local Printful stub, and a Playwright sandbox buyer.",
+ "modes": [
+  "demo",
+  "production"
+ ],
+ "runs": {
+  "before": [
+   {
+    "mode": "demo",
+    "commit": "upstream 860f621",
+    "at": "2026-10-19T10:17:46.926Z"
+   },
+   {
+    "mode": "production",
+    "commit": "upstream 860f621",
+    "at": "2026-10-19T10:22:58.626Z"
+   }
+  ],
+  "after": [
+   {
+    "mode": "demo",
+    "commit": "af4e134",
+    "at": "2026-10-19T09:33:27.987Z"
+   },
+   {
+    "mode": "production",
+    "commit": "af4e134",
+    "at": "2026-10-19T09:57:12.061Z"
+   }
+  ]
+ },
+ "tally": {
+  "before": {
+   "pass": 14,
+   "fail": 12,
+   "na": 10,
+   "inconclusive": 0,
+   "total": 36
+  },
+  "after": {
+   "pass": 35,
+   "fail": 0,
+   "na": 1,
+   "inconclusive": 0,
+   "total": 36
+  }
+ },
+ "failures": [
+  {
+   "id": "unapproved",
+   "code": "D1",
+   "mode": "demo",
+   "headline": "The buyer never approved anything. The shop confirmed the €62.00 order anyway.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/simple-clothing-store/crop-original-demo-unapproved-order-9000002.png",
+    "caption": "The shop's order page: its badge and total"
+   }
+  },
+  {
+   "id": "currency",
+   "code": "D2",
+   "mode": "demo",
+   "headline": "A tampered checkout paid 62.00 MXN. The shop confirmed its €62.00 order.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/simple-clothing-store/crop-original-demo-currency-order-9000005.png",
+    "caption": "The shop's order page: its badge and total"
+   }
+  },
+  {
+   "id": "lost-response",
+   "code": "D3",
+   "mode": "demo",
+   "headline": "The buyer was charged €62.00, but the order was never confirmed.",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/simple-clothing-store/crop-original-demo-lost-response-order-9000010.png",
+    "caption": "The shop's order page: its badge and total"
+   }
+  },
+  {
+   "id": "two-tabs",
+   "mode": "demo",
+   "headline": "Two tabs, one order: the buyer was charged twice (€62.00 + €62.00).",
+   "assumed": null,
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/simple-clothing-store/crop-original-demo-two-tabs-order-9000013.png",
+    "caption": "The shop's order page: its badge and total"
+   }
+  },
+  {
+   "id": "happy",
+   "code": "D7",
+   "mode": "production",
+   "headline": "With its Printful hand-off switched on, every paid order stayed unconfirmed: the buyer was charged €62.00, the order stayed a draft.",
+   "assumed": "Assumed: Printful's real reply to this call was not seen. A local stand-in answered with the 404 Printful's API docs describe for an unknown order ID.",
+   "sameCause": [
+    "happy",
+    "declined-retry",
+    "duplicate",
+    "server-error-retry",
+    "lost-response",
+    "restart-approved",
+    "two-tabs"
+   ],
+   "simulated": null,
+   "afterVerdict": "PASS",
+   "crop": {
+    "src": "data/shots/simple-clothing-store/crop-original-production-happy-order-9000001.png",
+    "caption": "The shop's order page: its badge and total"
+   }
+  }
+ ],
+ "heroId": null,
+ "scenarios": [
+  {
+   "id": "happy",
+   "title": "Happy path, PayPal wallet",
+   "ref": "#1",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.1,
+      "shopOrderId": "9000001",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "9P206712RW1530715",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "81431361E5743952R",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "021d74d70eb1d",
+       "8e7f0dc437ca0"
+      ],
+      "notes": [
+       "buyer approved 9P206712RW1530715"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-happy-order-9000001.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22,
+      "shopOrderId": "9000001",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "1J350488KH7373507",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9KU75799CX031542S",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f336483649050",
+       "f710386763928",
+       "f97431376970f"
+      ],
+      "notes": [
+       "buyer approved 1J350488KH7373507"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-happy-order-9000001.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (5MG42480M26873136 62.00 EUR) but shop order 9000001 is not confirmed (I4)",
+       "expected order 9000001 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 22.8,
+      "shopOrderId": "9000001",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "5JS84563KP473260S",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5MG42480M26873136",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "fe16fdc220ea8",
+       "2856156c8891b"
+      ],
+      "notes": [
+       "buyer approved 5JS84563KP473260S"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-happy-order-9000001.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.5,
+      "shopOrderId": "9000001",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "08219774T43288806",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9WY81118NB666083A",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f25858589d11d",
+       "f25858532d610",
+       "f3585853cfd63"
+      ],
+      "notes": [
+       "buyer approved 08219774T43288806"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-happy-order-9000001.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "happy-ui",
+   "title": "Happy path through the shop's own PayPal button",
+   "ref": "#1",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "v5 button needs a client ID compiled into the front end; the original's flow is proved through its server step instead"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.1,
+      "shopOrderId": "9000002",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "728334542U2199835",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "3Y753096RD7919428",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser → GET /api/paypal/client-token",
+        "http": 200
+       },
+       {
+        "step": "browser → POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "browser → POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f786226de89e1",
+       "f81277066e48c",
+       "f100861e962c1"
+      ],
+      "notes": [
+       "PayPal opened in a popup",
+       "buyer: approved (login,card,approve,done)",
+       "shop notice: Your order has been confirmed. We're getting it ready for shipment now! | ×Our store currently only supports modern browsers, sorry!"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-happy-ui-order-9000002.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "v5 button needs a client ID compiled into the front end; the original's flow is proved through its server step instead"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 24,
+      "shopOrderId": "9000002",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "9CA570149S609220U",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "6C355168YX851813X",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser → GET /api/paypal/client-token",
+        "http": 200
+       },
+       {
+        "step": "browser → POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "browser → POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f238659e88844",
+       "f832463a8b50e",
+       "f51356481167c"
+      ],
+      "notes": [
+       "PayPal opened in a popup",
+       "buyer: approved (login,card,approve,done)",
+       "shop notice: Your order has been confirmed. We're getting it ready for shipment now! | ×Our store currently only supports modern browsers, sorry!"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-happy-ui-order-9000002.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "unapproved",
+   "title": "Paid before approval (confirm an unapproved order)",
+   "ref": "#7a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "shop marked order 9000002 paid; PayPal shows no completed capture: 7EF388267K034905D CREATED (no capture) (I2)",
+       "expected order 9000002 not paid; shop says pending (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 5.7,
+      "shopOrderId": "9000002",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "7EF388267K034905D",
+        "status": "CREATED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "62b554d49b999"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-unapproved-order-9000002.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 6.2,
+      "shopOrderId": "9000003",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "0R911913DG339960T",
+        "status": "PAYER_ACTION_REQUIRED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f1263758008ec",
+       "f495667dddab8",
+       "f20448255fc99"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-unapproved-order-9000003.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 6.4,
+      "shopOrderId": "9000002",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "0TU97208LC510414R",
+        "status": "CREATED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "b302af37f933c"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-unapproved-order-9000002.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 6.9,
+      "shopOrderId": "9000003",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "9L473890PR5936902",
+        "status": "PAYER_ACTION_REQUIRED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f56144072bf1d",
+       "f157467ede199",
+       "f97856182b01a"
+      ],
+      "notes": [
+       "buyer never approved"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-unapproved-order-9000003.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "declined-retry",
+   "title": "Declined instrument, then a retry that works",
+   "ref": "#5",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 80.4,
+      "shopOrderId": "9000003",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "8MX30525TU099414N",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8V2692456Y898545P",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "eb7be6528f802"
+      ],
+      "notes": [
+       "buyer approved 8MX30525TU099414N",
+       "first capture mocked INSTRUMENT_DECLINED; second attempt unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-declined-retry-order-9000003.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.3,
+      "shopOrderId": "9000004",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "3GU04481776737204",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8F124998BB1569210",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INSTRUMENT_DECLINED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f806998268152",
+       "f299433d269ef",
+       "f299433af0dc3"
+      ],
+      "notes": [
+       "buyer approved 3GU04481776737204",
+       "first capture mocked INSTRUMENT_DECLINED; second attempt unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-declined-retry-order-9000004.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (9BS38446AY899093W 62.00 EUR) but shop order 9000003 is not confirmed (I4)",
+       "expected order 9000003 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 21.4,
+      "shopOrderId": "9000003",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "2XP88452S84960609",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9BS38446AY899093W",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "749c54eb25504"
+      ],
+      "notes": [
+       "buyer approved 2XP88452S84960609",
+       "first capture mocked INSTRUMENT_DECLINED; second attempt unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-declined-retry-order-9000003.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 19.4,
+      "shopOrderId": "9000004",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "02064621DG082970M",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8H702172EF588981J",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INSTRUMENT_DECLINED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f973814e2e3f3",
+       "ca4cee3d36831",
+       "ca4cee3d54aa9"
+      ],
+      "notes": [
+       "buyer approved 02064621DG082970M",
+       "first capture mocked INSTRUMENT_DECLINED; second attempt unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-declined-retry-order-9000004.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "duplicate",
+   "title": "Duplicate capture (double click, then a refresh)",
+   "ref": "#8a",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.9,
+      "shopOrderId": "9000004",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "752968920X857954V",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "37C805802S219282S",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "8292c2cda94c7",
+       "1d37e28bc38c3",
+       "9b9ead9671b61"
+      ],
+      "notes": [
+       "buyer approved 752968920X857954V",
+       "two concurrent completes, then a third"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-duplicate-order-9000004.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 19.9,
+      "shopOrderId": "9000005",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "7U11041697257691C",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "53G59844C63169228",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f4737664404f3",
+       "f443135092457"
+      ],
+      "notes": [
+       "buyer approved 7U11041697257691C",
+       "two concurrent completes, then a third"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-duplicate-order-9000005.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (92R255376R976022Y 62.00 EUR) but shop order 9000004 is not confirmed (I4)",
+       "expected order 9000004 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 24.6,
+      "shopOrderId": "9000004",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "3WF13323TS070291B",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "92R255376R976022Y",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "0c35cf845040c",
+       "6557b14582dd4",
+       "a7bd257863d85"
+      ],
+      "notes": [
+       "buyer approved 3WF13323TS070291B",
+       "two concurrent completes, then a third"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-duplicate-order-9000004.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.9,
+      "shopOrderId": "9000005",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "6A18842527894342S",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "42A534571P902984K",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "ca4cee3fa9dfc",
+       "f9971481c587e"
+      ],
+      "notes": [
+       "buyer approved 6A18842527894342S",
+       "two concurrent completes, then a third"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-duplicate-order-9000005.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "currency",
+   "title": "Foreign PayPal order (same amount, cheaper currency MXN) handed to the shop",
+   "ref": "#11a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "shop marked order 9000005 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)",
+       "expected order 9000005 not paid; shop says pending (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 19,
+      "shopOrderId": "9000005",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "6XR126781J632184L",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "79627975K1877391E",
+          "status": "COMPLETED",
+          "amount": "62.00 MXN"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "208b99f82d4ed"
+      ],
+      "notes": [
+       "attacker created 6XR126781J632184L for 62.00 MXN with custom_id 9000005 (debug f1784657f6e75)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 79627975K1877391E COMPLETED 62.00 MXN"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-currency-order-9000005.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.3,
+      "shopOrderId": "9000006",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "7UC50419KT751163J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8BW51908JY912905P",
+          "status": "COMPLETED",
+          "amount": "62.00 MXN"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f94799896b6db"
+      ],
+      "notes": [
+       "attacker created 7UC50419KT751163J for 62.00 MXN with custom_id 9000006 (debug f229471e3229d)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 8BW51908JY912905P COMPLETED 62.00 MXN"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-currency-order-9000006.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.8,
+      "shopOrderId": "9000005",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "90S62567AY310633F",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "29217064NF670832R",
+          "status": "COMPLETED",
+          "amount": "62.00 MXN"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "32824621bfa12"
+      ],
+      "notes": [
+       "attacker created 90S62567AY310633F for 62.00 MXN with custom_id 9000005 (debug f169957d5d845)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 29217064NF670832R COMPLETED 62.00 MXN"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-currency-order-9000005.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18,
+      "shopOrderId": "9000006",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "1B489854T8589820S",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "35088243FS864601A",
+          "status": "COMPLETED",
+          "amount": "62.00 MXN"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f452880c3c028"
+      ],
+      "notes": [
+       "attacker created 1B489854T8589820S for 62.00 MXN with custom_id 9000006 (debug ca4cee4709f56)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 35088243FS864601A COMPLETED 62.00 MXN"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-currency-order-9000006.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "amount",
+   "title": "Foreign PayPal order (lower amount 1.00) handed to the shop",
+   "ref": "#11a",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 19.8,
+      "shopOrderId": "9000006",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "4FL12942YS2665153",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "2WU657299K383744G",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "fd1a269346f8e"
+      ],
+      "notes": [
+       "attacker created 4FL12942YS2665153 for 1.00 EUR with custom_id 9000006 (debug f973551e7e345)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 2WU657299K383744G COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-amount-order-9000006.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 17.6,
+      "shopOrderId": "9000007",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "5YP48116NS104135D",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9G831385UR898803W",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f6868926bd40b"
+      ],
+      "notes": [
+       "attacker created 5YP48116NS104135D for 1.00 EUR with custom_id 9000007 (debug f3160540ccd04)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 9G831385UR898803W COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-amount-order-9000007.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 18.9,
+      "shopOrderId": "9000006",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "58106405A6773711J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "6PB95362VA951010J",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "88b9c3418d419"
+      ],
+      "notes": [
+       "attacker created 58106405A6773711J for 1.00 EUR with custom_id 9000006 (debug f4339749b7cfe)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 6PB95362VA951010J COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-amount-order-9000006.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 17.1,
+      "shopOrderId": "9000007",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "7TE639115P1085007",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5J083584RV988920D",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f133669e50967"
+      ],
+      "notes": [
+       "attacker created 7TE639115P1085007 for 1.00 EUR with custom_id 9000007 (debug ca4cee4e0de14)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 5J083584RV988920D COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-amount-order-9000007.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "currency-own",
+   "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+   "ref": "#11b",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "SIMULATED currency MXN on the shop's own order: judged as if PayPal had taken that",
+       "shop marked order 9000007 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)",
+       "expected order 9000007 not paid; shop says pending (I6)"
+      ],
+      "cause": "shop",
+      "simulated": "currency MXN",
+      "seconds": 24.2,
+      "shopOrderId": "9000007",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "24P5740130244042T",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "2M786572MY0648429",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "5ab985c468efd"
+      ],
+      "notes": [
+       "buyer approved 24P5740130244042T",
+       "SIMULATED: while the shop completed 24P5740130244042T, PayPal's answers to the shop's server reported currency MXN for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 2M786572MY0648429 (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 77Y02209S65881302 COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-currency-own-order-9000007.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED currency MXN on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "currency MXN",
+      "seconds": 23.2,
+      "shopOrderId": "9000008",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "9R411333DN8333523",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "32P02109MG645445G",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f1950996b1b91",
+       "f1006082c073b",
+       "f65411606c59d"
+      ],
+      "notes": [
+       "buyer approved 9R411333DN8333523",
+       "SIMULATED: while the shop completed 9R411333DN8333523, PayPal's answers to the shop's server reported currency MXN for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 32P02109MG645445G (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 7VG66818WY604145K COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-currency-own-order-9000008.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED currency MXN on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "currency MXN",
+      "seconds": 23.8,
+      "shopOrderId": "9000007",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "0Y756122DR4744217",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "4JN19442B4307951B",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "b9a66caa12950"
+      ],
+      "notes": [
+       "buyer approved 0Y756122DR4744217",
+       "SIMULATED: while the shop completed 0Y756122DR4744217, PayPal's answers to the shop's server reported currency MXN for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 4JN19442B4307951B (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 48L24308UN530470L COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-currency-own-order-9000007.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED currency MXN on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "currency MXN",
+      "seconds": 24.3,
+      "shopOrderId": "9000008",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "7B854646RH420471D",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "3DV625755Y247100F",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f4483331d0a04",
+       "f4787059183c1",
+       "f224405395ef4"
+      ],
+      "notes": [
+       "buyer approved 7B854646RH420471D",
+       "SIMULATED: while the shop completed 7B854646RH420471D, PayPal's answers to the shop's server reported currency MXN for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 3DV625755Y247100F (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 0JX23708DW9805255 COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-currency-own-order-9000008.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "amount-own",
+   "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+   "ref": "#11b",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED amount 1.00 on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "amount 1.00",
+      "seconds": 22.2,
+      "shopOrderId": "9000008",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "5N958504PF697915T",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8TA779866R565230H",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "20730a03cdcd1"
+      ],
+      "notes": [
+       "buyer approved 5N958504PF697915T",
+       "SIMULATED: while the shop completed 5N958504PF697915T, PayPal's answers to the shop's server reported amount 1.00 for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 8TA779866R565230H (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 8YP76306VB376505M COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-amount-own-order-9000008.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED amount 1.00 on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "amount 1.00",
+      "seconds": 23,
+      "shopOrderId": "9000009",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "3JG343840D757914Y",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "57N5690901047204Y",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f224511086b5b",
+       "f954992067a63",
+       "f35915405f672"
+      ],
+      "notes": [
+       "buyer approved 3JG343840D757914Y",
+       "SIMULATED: while the shop completed 3JG343840D757914Y, PayPal's answers to the shop's server reported amount 1.00 for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 57N5690901047204Y (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 7N3449212H925931A COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-amount-own-order-9000009.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED amount 1.00 on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "amount 1.00",
+      "seconds": 24.2,
+      "shopOrderId": "9000008",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "6JJ55414R8406134C",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "15G90708GG056140H",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "a7e56a01da193"
+      ],
+      "notes": [
+       "buyer approved 6JJ55414R8406134C",
+       "SIMULATED: while the shop completed 6JJ55414R8406134C, PayPal's answers to the shop's server reported amount 1.00 for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 15G90708GG056140H (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 3DV10513YV155902S COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-amount-own-order-9000008.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [
+       "SIMULATED amount 1.00 on the shop's own order: judged as if PayPal had taken that"
+      ],
+      "cause": null,
+      "simulated": "amount 1.00",
+      "seconds": 22.2,
+      "shopOrderId": "9000009",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "3JB478026B2233430",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8N420126249356503",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f1112863e968d",
+       "f660361486438",
+       "ca4cee65e0f51"
+      ],
+      "notes": [
+       "buyer approved 3JB478026B2233430",
+       "SIMULATED: while the shop completed 3JB478026B2233430, PayPal's answers to the shop's server reported amount 1.00 for the order and its capture; PayPal's real record is unchanged",
+       "harness refunded the real capture 8N420126249356503 (62.00 EUR) afterwards to keep the sandbox buyer's balance: HTTP 201, refund 5X319127TM337011N COMPLETED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-amount-own-order-9000009.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "create-refused",
+   "title": "PayPal refuses to create the order",
+   "ref": "#4",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original creates orders in the browser, so the shop's server never sees a create call to fail"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 5,
+      "shopOrderId": "9000010",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 422
+       },
+       {
+        "step": "GET /api/orders/:id (shop still serving)",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_CANNOT_PAY"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f810209383af0",
+       "f43542896f512"
+      ],
+      "notes": [
+       "create answered 422"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-create-refused-order-9000010.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original creates orders in the browser, so the shop's server never sees a create call to fail"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 4.6,
+      "shopOrderId": "9000010",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 422
+       },
+       {
+        "step": "GET /api/orders/:id (shop still serving)",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_CANNOT_PAY"
+      ],
+      "harness": [],
+      "debugIds": [
+       "ca4cee66e19df",
+       "ca4cee67ac95a"
+      ],
+      "notes": [
+       "create answered 422"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-create-refused-order-9000010.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "server-error-retry",
+   "title": "PayPal 500 on capture, then a retry",
+   "ref": "#9b",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.1,
+      "shopOrderId": "9000009",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "48X275241M2123239",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5DB52905JR105244E",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 500
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "2528671860b0e"
+      ],
+      "notes": [
+       "buyer approved 48X275241M2123239",
+       "first capture mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed); retry unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-server-error-retry-order-9000009.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.4,
+      "shopOrderId": "9000011",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "5B6932498E345311J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8UY72650RR046424K",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INTERNAL_SERVER_ERROR"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f359688fcd44e",
+       "f9042107e5728",
+       "f891338b9f712"
+      ],
+      "notes": [
+       "buyer approved 5B6932498E345311J",
+       "first capture mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed); retry unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-server-error-retry-order-9000011.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (6R968355U5990501G 62.00 EUR) but shop order 9000009 is not confirmed (I4)",
+       "expected order 9000009 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 21,
+      "shopOrderId": "9000009",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "28J166421A5488437",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "6R968355U5990501G",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 500
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "0d0496ddf1f2c"
+      ],
+      "notes": [
+       "buyer approved 28J166421A5488437",
+       "first capture mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed); retry unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-server-error-retry-order-9000009.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.3,
+      "shopOrderId": "9000011",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "2S851418P2909132J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5MG65090MA549242D",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "INTERNAL_SERVER_ERROR"
+      ],
+      "harness": [],
+      "debugIds": [
+       "ca4cee68b0b4a",
+       "ca4cee6dcde50",
+       "ca4cee6e46879"
+      ],
+      "notes": [
+       "buyer approved 2S851418P2909132J",
+       "first capture mocked INTERNAL_SERVER_ERROR (a 5xx passed through is allowed); retry unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-server-error-retry-order-9000011.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "lost-response",
+   "title": "Capture succeeds, its response is lost, then a retry",
+   "ref": "#9a",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (8SG018423D288284U 62.00 EUR) but shop order 9000010 is not confirmed (I4)",
+       "expected order 9000010 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 20.5,
+      "shopOrderId": "9000010",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "4DC60114XT303470C",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8SG018423D288284U",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: capture response lost (tab closed / network); Payment.js never calls confirm and nothing reconciles",
+        "http": 0
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [
+       "buyer approved 4DC60114XT303470C",
+       "the v5 client has no retry or lookup path after a lost capture response",
+       "PayPal processed the first capture; its response was dropped before the shop's code saw it"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-lost-response-order-9000010.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.7,
+      "shopOrderId": "9000012",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "24234195WV181110X",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5G900006FA226844U",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [
+       "harness: response dropped after PayPal processed the call"
+      ],
+      "debugIds": [
+       "f947308418d5a",
+       "f708944c2bc55",
+       "f9721437d6e69"
+      ],
+      "notes": [
+       "buyer approved 24234195WV181110X",
+       "PayPal processed the first capture; its response was dropped before the shop's code saw it"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-lost-response-order-9000012.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (0E337500DK171980V 62.00 EUR) but shop order 9000010 is not confirmed (I4)",
+       "expected order 9000010 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 21.6,
+      "shopOrderId": "9000010",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8K7054094E951491E",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "0E337500DK171980V",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: capture response lost (tab closed / network); Payment.js never calls confirm and nothing reconciles",
+        "http": 0
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [
+       "buyer approved 8K7054094E951491E",
+       "the v5 client has no retry or lookup path after a lost capture response",
+       "PayPal processed the first capture; its response was dropped before the shop's code saw it"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-lost-response-order-9000010.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.9,
+      "shopOrderId": "9000012",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "4XU99361526348138",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "0PA24389M57309227",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [
+       "harness: response dropped after PayPal processed the call"
+      ],
+      "debugIds": [
+       "ca4cee709a8bc",
+       "f3349802fa8f4",
+       "f139417b28f46"
+      ],
+      "notes": [
+       "buyer approved 4XU99361526348138",
+       "PayPal processed the first capture; its response was dropped before the shop's code saw it"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-lost-response-order-9000012.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "payer-action",
+   "title": "PayPal demands a buyer step on capture (PAYER_ACTION_REQUIRED, mocked): the shop sends the buyer to the order's own payer-action link, and a later capture of the same order succeeds",
+   "ref": "#6",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original captures in the browser through the v5 SDK, so its server never sees PayPal's PAYER_ACTION_REQUIRED answer"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.2,
+      "shopOrderId": "9000013",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "0W1796684L7472926",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "63Y74528J88413030",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_ACTION_REQUIRED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f5353445a337f",
+       "f54590452cb57",
+       "f24302665a14a"
+      ],
+      "notes": [
+       "buyer approved 0W1796684L7472926",
+       "shop answered 422 PAYER_ACTION_REQUIRED with PayPal's own payer-action link for the order (https://www.sandbox.paypal.com/checkoutnow?token=0W1796684L7472926&cp_link=paypal; cp_link=paypal is the harness's tag)",
+       "first capture mocked PAYER_ACTION_REQUIRED; after the buyer's return, the same PayPal order captured unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-payer-action-order-9000013.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original captures in the browser through the v5 SDK, so its server never sees PayPal's PAYER_ACTION_REQUIRED answer"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.2,
+      "shopOrderId": "9000013",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "2158359583365332T",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "12X07514H20310424",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_ACTION_REQUIRED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f571095f51019",
+       "f39326660eaf5",
+       "f39326634fe06"
+      ],
+      "notes": [
+       "buyer approved 2158359583365332T",
+       "shop answered 422 PAYER_ACTION_REQUIRED with PayPal's own payer-action link for the order (https://www.sandbox.paypal.com/checkoutnow?token=2158359583365332T&cp_link=paypal; cp_link=paypal is the harness's tag)",
+       "first capture mocked PAYER_ACTION_REQUIRED; after the buyer's return, the same PayPal order captured unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-payer-action-order-9000013.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "capture-refused",
+   "title": "PayPal refuses the capture three ways (TRANSACTION_REFUSED, COMPLIANCE_VIOLATION, MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED, mocked)",
+   "ref": "#5",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.1,
+      "shopOrderId": "9000011",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8D757860266673546",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [
+       "buyer approved 8D757860266673546",
+       "capture mocked TRANSACTION_REFUSED: shop answered 422",
+       "capture mocked COMPLIANCE_VIOLATION: shop answered 422",
+       "capture mocked MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: shop answered 422"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-capture-refused-order-9000011.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.5,
+      "shopOrderId": "9000014",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "2VT50002586592638",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [
+       "TRANSACTION_REFUSED",
+       "COMPLIANCE_VIOLATION",
+       "MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f585757a9e89e",
+       "f752400eee51a",
+       "f64552379111b",
+       "f645523c7f0d3"
+      ],
+      "notes": [
+       "buyer approved 2VT50002586592638",
+       "capture mocked TRANSACTION_REFUSED: shop answered 422 TRANSACTION_REFUSED",
+       "capture mocked COMPLIANCE_VIOLATION: shop answered 422 COMPLIANCE_VIOLATION",
+       "capture mocked MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: shop answered 422 MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-capture-refused-order-9000014.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.2,
+      "shopOrderId": "9000011",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "68E69391EE380380T",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 422
+       },
+       {
+        "step": "browser: capture rejected; Payment.js has no handler, confirm is never called",
+        "http": 0
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [
+       "buyer approved 68E69391EE380380T",
+       "capture mocked TRANSACTION_REFUSED: shop answered 422",
+       "capture mocked COMPLIANCE_VIOLATION: shop answered 422",
+       "capture mocked MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: shop answered 422"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-capture-refused-order-9000011.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 20.8,
+      "shopOrderId": "9000014",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "7T7216285U480210S",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       }
+      ],
+      "mocked": [
+       "TRANSACTION_REFUSED",
+       "COMPLIANCE_VIOLATION",
+       "MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "f732425a61747",
+       "ca4cee874cd56",
+       "ca4cee879af9a",
+       "ca4cee87b2830"
+      ],
+      "notes": [
+       "buyer approved 7T7216285U480210S",
+       "capture mocked TRANSACTION_REFUSED: shop answered 422 TRANSACTION_REFUSED",
+       "capture mocked COMPLIANCE_VIOLATION: shop answered 422 COMPLIANCE_VIOLATION",
+       "capture mocked MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED: shop answered 422 MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-capture-refused-order-9000014.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "restart-approved",
+   "title": "Shop restarts between the buyer's approval and the capture",
+   "ref": "#7b",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 25,
+      "shopOrderId": "9000012",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "28P51043X8156690E",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "96P49010D1823980E",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "06b66e26a6252",
+       "3d90284280a30",
+       "9886963eea378"
+      ],
+      "notes": [
+       "buyer approved 28P51043X8156690E",
+       "shop process restarted after the buyer approved",
+       "the return page captured, then a refresh captured again"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-restart-approved-order-9000012.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 21.8,
+      "shopOrderId": "9000015",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "76Y98214ML419051D",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "0KT55260X7601860E",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f6130585d8e3e",
+       "f358383bdd627",
+       "f6242206545ce"
+      ],
+      "notes": [
+       "buyer approved 76Y98214ML419051D",
+       "shop process restarted after the buyer approved",
+       "the return page captured, then a refresh captured again"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-restart-approved-order-9000015.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (8U5314152W059725G 62.00 EUR) but shop order 9000012 is not confirmed (I4)",
+       "expected order 9000012 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 23.4,
+      "shopOrderId": "9000012",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "14S243571J214220R",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8U5314152W059725G",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "bb369106ae57f",
+       "37078715f44ec",
+       "204943fa33f89"
+      ],
+      "notes": [
+       "buyer approved 14S243571J214220R",
+       "shop process restarted after the buyer approved",
+       "the return page captured, then a refresh captured again"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-restart-approved-order-9000012.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 23.6,
+      "shopOrderId": "9000015",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "594811674N373111G",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "42B98295LD096872X",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "ca4cee89f1b86",
+       "f203969cfaa3e",
+       "f974119cf9f95"
+      ],
+      "notes": [
+       "buyer approved 594811674N373111G",
+       "shop process restarted after the buyer approved",
+       "the return page captured, then a refresh captured again"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-restart-approved-order-9000015.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "restart-pending",
+   "title": "Shop restarts while PayPal holds the payment (pending, SIMULATED): no second payment, and PayPal's completion still confirms the order once",
+   "ref": "#10c",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original's server never sees the capture, so it has no pending payment to keep across a restart (its missing pending handling is the webhook row's finding)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 22.1,
+      "shopOrderId": "9000016",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "22V79335RP4416003",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "37B97383VS699310V",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders (again, after the restart)",
+        "http": 409
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f75349292f264",
+       "f879402abadab",
+       "f556026a34ffc",
+       "f556026c82c4a"
+      ],
+      "notes": [
+       "buyer approved 22V79335RP4416003",
+       "shop process restarted while the capture was pending",
+       "second checkout after the restart refused: HTTP 409 PAYMENT_PENDING"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-restart-pending-order-9000016.png",
+      "timeline": [
+       {
+        "t": 15.2,
+        "step": "capture answered PENDING (SIMULATED; the real capture completed)"
+       },
+       {
+        "t": 15.7,
+        "step": "shop process restarted"
+       },
+       {
+        "t": 16.9,
+        "step": "buyer's return page asked the shop to complete the order"
+       }
+      ]
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "the original's server never sees the capture, so it has no pending payment to keep across a restart (its missing pending handling is the webhook row's finding)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 24.7,
+      "shopOrderId": "9000016",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "02W53487WT5820246",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "9WJ86789BU313411E",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders (again, after the restart)",
+        "http": 409
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "ca4cee932cab6",
+       "f45987238ecae",
+       "f89212863dda1",
+       "f89212828bcb7"
+      ],
+      "notes": [
+       "buyer approved 02W53487WT5820246",
+       "shop process restarted while the capture was pending",
+       "second checkout after the restart refused: HTTP 409 PAYMENT_PENDING"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-restart-pending-order-9000016.png",
+      "timeline": [
+       {
+        "t": 17.1,
+        "step": "capture answered PENDING (SIMULATED; the real capture completed)"
+       },
+       {
+        "t": 18.7,
+        "step": "shop process restarted"
+       },
+       {
+        "t": 19.4,
+        "step": "buyer's return page asked the shop to complete the order"
+       }
+      ]
+     }
+    }
+   ]
+  },
+  {
+   "id": "two-tabs",
+   "title": "Two checkouts for one shop order (two tabs), both approved and paid",
+   "ref": "#8",
+   "expect": "paid-once",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "2 completed captures for shop order 9000013: 10E81130VN4939053, 11P87565PE593054R (I5)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 36.3,
+      "shopOrderId": "9000013",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "3WF990949E722530S",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "10E81130VN4939053",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       },
+       {
+        "orderId": "2YV31731NP629584K",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "11P87565PE593054R",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "9afba6d2d3e41",
+       "1f2cf802dc76c"
+      ],
+      "notes": [
+       "buyer approved 3WF990949E722530S",
+       "buyer approved 2YV31731NP629584K",
+       "both tabs completed at the same time"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-demo-two-tabs-order-9000013.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 34.3,
+      "shopOrderId": "9000017",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "25R51098BH8529606",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "3KV64610EB095643S",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       },
+       {
+        "orderId": "29Y40699ET841440D",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f279134bd31ec",
+       "f96027905e3be",
+       "f4738291182d3"
+      ],
+      "notes": [
+       "buyer approved 25R51098BH8529606",
+       "buyer approved 29Y40699ET841440D",
+       "both tabs completed at the same time"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-two-tabs-order-9000017.png",
+      "timeline": null
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "FAIL",
+      "reasons": [
+       "buyer was charged (0GE91126X5762414P 62.00 EUR, 5Y591309UB829651V 62.00 EUR) but shop order 9000013 is not confirmed (I4)",
+       "2 completed captures for shop order 9000013: 0GE91126X5762414P, 5Y591309UB829651V (I5)",
+       "expected order 9000013 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 61.2,
+      "shopOrderId": "9000013",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8U140971S2245524A",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "0GE91126X5762414P",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       },
+       {
+        "orderId": "5H31959632739035A",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "5Y591309UB829651V",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.create (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       },
+       {
+        "step": "browser: actions.order.capture (played by harness)",
+        "http": 201
+       },
+       {
+        "step": "POST /api/confirm/:id",
+        "http": 400
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "3be8119dae405",
+       "361d5782c76a5"
+      ],
+      "notes": [
+       "buyer approved 8U140971S2245524A",
+       "buyer approved 5H31959632739035A",
+       "both tabs completed at the same time"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/original-production-two-tabs-order-9000013.png",
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 40.9,
+      "shopOrderId": "9000017",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "7C763754E6421153J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "2NS95702UV703281N",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       },
+       {
+        "orderId": "8R179180JU9634338",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 409
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f29983119a368",
+       "f65233244977d",
+       "f1364273187ff"
+      ],
+      "notes": [
+       "buyer approved 7C763754E6421153J",
+       "buyer approved 8R179180JU9634338",
+       "both tabs completed at the same time"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-production-two-tabs-order-9000017.png",
+      "timeline": null
+     }
+    }
+   ]
+  },
+  {
+   "id": "webhook",
+   "title": "Pending capture (SIMULATED) confirmed by a genuine webhook, then refunded; replayed and forged deliveries change nothing",
+   "ref": "#12 #14",
+   "expect": "not-paid",
+   "modes": [
+    {
+     "mode": "demo",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "no webhook handling in the original (a finding: pending, refunded and reversed payments never reach the order)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "PASS",
+      "reasons": [],
+      "cause": null,
+      "simulated": null,
+      "seconds": 59.8,
+      "shopOrderId": "9000018",
+      "shopTotal": null,
+      "shopBefore": "draft",
+      "shopAfter": "refunded",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "8WV59736DU584400X",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "78R366296J545862N",
+          "status": "REFUNDED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders (again, while pending)",
+        "http": 409
+       },
+       {
+        "step": "POST /api/paypal/webhook (forged: no PayPal headers)",
+        "http": 400
+       },
+       {
+        "step": "POST /api/paypal/webhook (forged REVERSED: bad signature)",
+        "http": 400
+       },
+       {
+        "step": "POST /api/paypal/webhook (replay of the genuine PAYMENT.CAPTURE.COMPLETED delivery)",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/webhook (replay of the genuine PAYMENT.CAPTURE.REFUNDED delivery)",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [
+       "Live re-run on Cloud Run, 2026-10-22 15:52 UTC (commit af4e134): real PayPal webhook deliveries.",
+       "buyer approved 8WV59736DU584400X",
+       "shop answered the pending capture; second checkout while pending: HTTP 409",
+       "webhook PAYMENT.CAPTURE.COMPLETED WH-5US12195AV3515728-58328706MV317063F: pending → paid",
+       "harness refunded 78R366296J545862N at PayPal: HTTP 201, refund 5CM25189XS063744A COMPLETED (debug f1292989d72fc)",
+       "webhook PAYMENT.CAPTURE.REFUNDED WH-6DY49289FA854514U-6BY441412M632471H: paid → refunded",
+       "replayed PAYMENT.CAPTURE.COMPLETED WH-5US12195AV3515728-58328706MV317063F: HTTP 200, deliveries 1 → 2",
+       "replayed PAYMENT.CAPTURE.REFUNDED WH-6DY49289FA854514U-6BY441412M632471H: HTTP 200, deliveries 1 → 2",
+       "changes [\"null→pending\",\"pending→paid WH-5US12195AV3515728-58328706MV317063F\",\"paid→refunded WH-6DY49289FA854514U-6BY441412M632471H\"]"
+      ],
+      "timeline": [
+       {
+        "t": 18.8,
+        "step": "capture answered PENDING (SIMULATED; the real capture completed)"
+       },
+       {
+        "t": 35.3,
+        "step": "genuine PAYMENT.CAPTURE.COMPLETED WH-5US12195AV3515728-58328706MV317063F confirmed the order"
+       },
+       {
+        "t": 37.1,
+        "step": "refund 5CM25189XS063744A at PayPal"
+       },
+       {
+        "t": 53.7,
+        "step": "genuine PAYMENT.CAPTURE.REFUNDED WH-6DY49289FA854514U-6BY441412M632471H marked the order refunded"
+       },
+       {
+        "t": 54.6,
+        "step": "both genuine deliveries replayed; state unchanged"
+       }
+      ]
+     }
+    },
+    {
+     "mode": "production",
+     "before": {
+      "verdict": "N/A",
+      "reasons": [
+       "no webhook handling in the original (a finding: pending, refunded and reversed payments never reach the order)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     },
+     "after": {
+      "verdict": "N/A",
+      "reasons": [
+       "needs real PayPal deliveries, which reach only the hosted listener: runs in the live re-run (CP_WEBHOOK_LIVE=1)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 0,
+      "shopOrderId": null,
+      "shopTotal": null,
+      "shopBefore": null,
+      "shopAfter": null,
+      "shopPaid": null,
+      "paypal": [],
+      "calls": [],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [],
+      "notes": [],
+      "timeline": null
+     }
+    }
+   ]
+  }
+ ],
+ "diff": {
+  "files": [
+   {
+    "file": ".gitignore",
+    "added": 4,
+    "removed": 1
+   },
+   {
+    "file": "AGENTS.md",
+    "added": 1,
+    "removed": 1
+   },
+   {
+    "file": "CLAUDE.MD",
+    "added": 15,
+    "removed": 7
+   },
+   {
+    "file": "README.md",
+    "added": 1,
+    "removed": 1
+   },
+   {
+    "file": "frontend/README.md",
+    "added": 1,
+    "removed": 1
+   },
+   {
+    "file": "frontend/package.json",
+    "added": 0,
+    "removed": 1
+   },
+   {
+    "file": "frontend/src/components/order/Order.js",
+    "added": 40,
+    "removed": 11
+   },
+   {
+    "file": "frontend/src/components/order/Payment.js",
+    "added": 201,
+    "removed": 58
+   },
+   {
+    "file": "frontend/src/components/order/Price.js",
+    "added": 20,
+    "removed": 3
+   },
+   {
+    "file": "frontend/src/config.js",
+    "added": 0,
+    "removed": 1
+   },
+   {
+    "file": "lib/paypal.js",
+    "added": 186,
+    "removed": 38
+   },
+   {
+    "file": "package.json",
+    "added": 2,
+    "removed": 2
+   },
+   {
+    "file": "server.js",
+    "added": 741,
+    "removed": 31
+   }
+  ],
+  "added": 1212,
+  "removed": 156,
+  "commits": [
+   "1d11825 upgrade: JS SDK v6 + @paypal/paypal-server-sdk (model finished)",
+   "ea14195 webhook: verified PAYMENT.CAPTURE.* events change the order once (model finished)",
+   "e47e7bd PAYER_ACTION_REQUIRED: answer the order's payer-action link and send the buyer there, capture the same order on return; experience_context instead of deprecated application_context (by hand, review r1 A7; no model pass)",
+   "90473e7 fix round 1: two-tabs (demo mode)",
+   "eb50069 revert hand commit e47e7bd (harness, review r2 A7): the PAYER_ACTION_REQUIRED change must come from the fix loop",
+   "af4e134 fix round 1: payer-action (demo mode), restart-approved (demo mode), restart-pending (demo mode), payer-action (production mode), restart-approved (production mode), restart-pending (production mode)"
+  ]
+ },
+ "scan": {
+  "before": [
+   {
+    "rule": "v5-react-wrapper",
+    "kind": "upgrade",
+    "file": "frontend/package.json",
+    "line": 19,
+    "text": "\"react-paypal-button-v2\": \"^2.6.1\",",
+    "why": "react-paypal-button-v2 (a community wrapper) loads JS SDK v5; JS SDK v6 is available (web-sdk/v6/core)"
+   },
+   {
+    "rule": "v5-react-wrapper",
+    "kind": "upgrade",
+    "file": "frontend/src/components/order/Payment.js",
+    "line": 2,
+    "text": "import {PayPalButton} from 'react-paypal-button-v2'",
+    "why": "react-paypal-button-v2 (a community wrapper) loads JS SDK v5; JS SDK v6 is available (web-sdk/v6/core)"
+   },
+   {
+    "rule": "application-context",
+    "kind": "deprecated",
+    "file": "frontend/src/components/order/Payment.js",
+    "line": 64,
+    "text": "application_context: {",
+    "why": "Orders v2 application_context is deprecated; set these fields in payment_source.paypal.experience_context"
+   },
+   {
+    "rule": "client-create-order",
+    "kind": "risk",
+    "file": "frontend/src/components/order/Payment.js",
+    "line": 33,
+    "text": "return actions.order.create({",
+    "why": "order amount and currency are set in the browser (SCENARIOS #11: tampering)"
+   },
+   {
+    "rule": "client-capture",
+    "kind": "risk",
+    "file": "frontend/src/components/order/Payment.js",
+    "line": 11,
+    "text": "actions.order.capture().then((details) => {",
+    "why": "capture happens in the browser; a lost confirm leaves a paid, unfulfilled order (SCENARIOS #9)"
+   },
+   {
+    "rule": "checkout-server-sdk",
+    "kind": "deprecated",
+    "file": "lib/paypal.js",
+    "line": 9,
+    "text": "const checkoutNodeJssdk = require('@paypal/checkout-server-sdk')",
+    "why": "@paypal/checkout-server-sdk is deprecated; use @paypal/paypal-server-sdk"
+   },
+   {
+    "rule": "checkout-server-sdk",
+    "kind": "deprecated",
+    "file": "package.json",
+    "line": 15,
+    "text": "\"@paypal/checkout-server-sdk\": \"^1.0.2\",",
+    "why": "@paypal/checkout-server-sdk is deprecated; use @paypal/paypal-server-sdk"
+   },
+   {
+    "rule": "checkout-server-sdk",
+    "kind": "deprecated",
+    "file": "server.js",
+    "line": 4,
+    "text": "const checkoutNodeJssdk = require('@paypal/checkout-server-sdk')",
+    "why": "@paypal/checkout-server-sdk is deprecated; use @paypal/paypal-server-sdk"
+   },
+   {
+    "rule": "no-capture-status-check",
+    "kind": "risk",
+    "file": "server.js",
+    "line": 91,
+    "text": "const request = new checkoutNodeJssdk.orders.OrdersGetRequest(orderID)",
+    "why": "reads or captures a PayPal order, and no file in the repo looks at the capture's status (SCENARIOS #7, #10: paid without a completed capture)"
+   },
+   {
+    "rule": "no-currency-check",
+    "kind": "risk",
+    "file": "server.js",
+    "line": 102,
+    "text": "data.retail_costs.total === order.result.purchase_units[0].amount.value) {",
+    "why": "compares an amount value but never the currency (SCENARIOS #11: 62.00 MXN passes for 62.00 EUR)"
+   }
+  ],
+  "after": []
+ },
+ "arms": [
+  {
+   "arm": "",
+   "label": "Full prompt",
+   "prompt": "Migration plus the proof contract and the money rules (bind each PayPal order to one shop order, check capture status, amount and currency, idempotent capture).",
+   "steps": [
+    {
+     "kind": "upgrade",
+     "step": "upgrade",
+     "commit": "1d11825",
+     "at": "2026-10-17T07:19:21.227Z",
+     "byHand": false,
+     "turns": 88,
+     "seconds": 599,
+     "skills": [
+      "paypal:paypal-best-practices",
+      "paypal-server-sdk:typescript-error-handling",
+      "paypal-server-sdk:typescript-calling-endpoints",
+      "paypal-server-sdk:typescript-client-initialization",
+      "paypal-server-sdk:typescript-getting-started"
+     ],
+     "summary": "I've moved the payments to the new server SDK and JS SDK v6, and fixed the money defects the scan found. Nothing has been run: the proof harness does the build and runtime check. `node --check` passes on both server files. ESLint and a Babel parse of the changed frontend files both needed permission I didn't have, so the frontend is unchecked until the harness builds it.\n\n## Files changed\n- **`package.json` / lockfile**: dropped `@paypal/checkout-server-sdk` and added `@paypal/paypal-server-sdk` pinned at `2.5.0`. I also raised `engines.node` to `>=14.17.0` because the new SDK requires it. `npm uninstall` needed permission I didn't have, so I edited `package.json` and re-ran `npm install --ignore-scripts`.\n- **`lib/paypal.js`**: rewritten. One shared client built from the two env credentials, using Sandbox unless `PAYPAL_ENVIRONMENT` is `live`. It does create, capture and get through `OrdersController`, and makes the v6 client token through `OAuthAuthorizationController`. A helper reads the issue and `debug_id` off PayPal errors without logging the request, which carries the auth header.\n- **`server.js`**:\n  - removed `POST /api/confirm/:orderId`;\n  - added `GET /api/paypal/client-token`, `POST /api/paypal/orders` and `POST /api/paypal/orders/:id/capture`;\n  - a comment notes that the PayPal-order-to-shop-order binding is in memory because there is no database.\n- **`frontend/sr",
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "1d11825",
+     "at": "2026-10-17T07:21:57.025Z",
+     "pass": 9,
+     "fail": [],
+     "buildError": false,
+     "note": "partial run (9 of 22 scenario runs)",
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "1d11825",
+     "at": "2026-10-17T07:36:06.336Z",
+     "pass": 22,
+     "fail": [],
+     "buildError": false,
+     "note": "Changed since: upgrade (webhook extension) → ea14195; fix by hand (review r1 A7) → e47e7bd; fix round 1 → 90473e7; revert (harness) → eb50069; fix round 1: stopped at the usage limit, no change; fix round 2: stopped at the usage limit, no change; fix round 3: stopped at the usage limit, no change; fix round 1 → af4e134. 8 later full proofs; red in e47e7bd: two-tabs (demo mode); eb50069: payer-action (demo mode), restart-approved (demo mode), restart-pending (demo mode), payer-action (production mode), restart-approved (production mode), restart-pending (production mode); eb50069: payer-action (demo mode), restart-approved (demo mode), restart-pending (demo mode), payer-action (production mode), restart-approved (production mode), restart-pending (production mode); eb50069: payer-action (demo mode), restart-approved (demo mode), restart-pending (demo mode), payer-action (production mode), restart-approved (production mode), restart-pending (production mode); eb50069: payer-action (demo mode), restart-approved (demo mode), restart-pending (demo mode), payer-action (production mode), restart-approved (production mode), restart-pending (production mode); the latest (af4e134) is green, 32 pass, 2 inconclusive (the harness's), 0 fail (loop log).",
+     "harness": false
+    }
+   ],
+   "later": null
+  },
+  {
+   "arm": "plain",
+   "label": "Plain prompt",
+   "prompt": "Migrate only: move to JS SDK v6 and @paypal/paypal-server-sdk, keep the proof contract. No money rules. Anything it gets right about money comes from the model or from the evidence fed back to it.",
+   "steps": [
+    {
+     "kind": "upgrade",
+     "step": "upgrade (plain prompt: migrate only)",
+     "commit": "5d4816a",
+     "at": "2026-10-17T07:45:18.613Z",
+     "byHand": false,
+     "turns": 78,
+     "seconds": 500,
+     "skills": [
+      "paypal-server-sdk:typescript-testing",
+      "paypal:paypal-best-practices",
+      "paypal-server-sdk:typescript-configuration-resilience",
+      "paypal-server-sdk:typescript-error-handling",
+      "paypal-server-sdk:typescript-models",
+      "paypal-server-sdk:typescript-calling-endpoints",
+      "paypal-server-sdk:typescript-authentication",
+      "paypal-server-sdk:typescript-client-initialization",
+      "paypal-server-sdk:typescript-getting-started"
+     ],
+     "summary": "I've migrated the server to `@paypal/paypal-server-sdk` and the browser to JS SDK v6. None of it has been run: I didn't run ESLint, the git commands to check the lockfile were denied, and I skipped a small SDK smoke script because it needed your approval. Both server files pass `node --check`, and I checked every SDK import against the installed 2.5.0 source.\n\n**How it works now**\n- **Server client:** one `Client` per process, using `PAYPAL_CLIENT_ID` / `PAYPAL_CLIENT_SECRET`, Sandbox unless `PAYPAL_ENVIRONMENT` is `live`. I set a 30s timeout, because the SDK's default of 0 means \"never time out\". Retries are capped at 2 for GET and POST; POSTs are safe to retry because each carries a `PayPal-Request-Id`.\n- **`POST /api/paypal/orders`** looks up the Printful order and rejects it if it is missing (404) or already paid (409). It builds the amount on the server from Printful's figures instead of trusting the browser, and returns `201 {\"id\"}`. The cost breakdown is only sent when it adds up to the total, since PayPal rejects a mismatch.\n- **`POST /api/paypal/orders/:id/capture`** fetches the PayPal order and checks that the shop order is still unpaid and the amount matches. Only then does it capture and confirm the shop order, so money is never taken for an order that won't be confirmed. If the order was already captured (e.g. a retried request), it skips straight to confirming.\n  ",
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "5d4816a",
+     "at": "2026-10-17T07:52:19.345Z",
+     "pass": 16,
+     "fail": [
+      {
+       "id": "currency (demo mode)",
+       "reason": "shop marked order 9000006 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+      },
+      {
+       "id": "amount (demo mode)",
+       "reason": "shop marked order 9000007 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+      },
+      {
+       "id": "two-tabs (demo mode)",
+       "reason": "2 completed captures for shop order 9000011: 1SN30608UV766654J, 8T655628MN948531N (I5)"
+      },
+      {
+       "id": "currency (production mode)",
+       "reason": "shop marked order 9000006 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+      },
+      {
+       "id": "amount (production mode)",
+       "reason": "shop marked order 9000007 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+      },
+      {
+       "id": "two-tabs (production mode)",
+       "reason": "2 completed captures for shop order 9000011: 3P388277GX669964C, 6B721014DW6341458 (I5)"
+      }
+     ],
+     "buildError": false,
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "fix",
+     "step": "fix round 1",
+     "commit": "156318c",
+     "at": "2026-10-17T07:53:44.129Z",
+     "byHand": false,
+     "turns": 14,
+     "seconds": 85,
+     "skills": [],
+     "summary": "I fixed all three causes in `server.js`. The file passes a syntax check, but per your constraints I haven't run the server, the build or the proof again, so the 6 scenarios aren't confirmed passing yet.\n\n**Cause**\n- **currency and amount (4 failures):** the capture endpoint trusted the PayPal order's `custom_id` to decide which shop order it paid for. It never checked that this server had created that PayPal order. Its \"already completed\" branch also skipped the amount check. So an order the attacker created and captured themselves (62.00 MXN, or 1.00 EUR) with a matching `custom_id` confirmed the shop order.\n- **two-tabs (2 failures):** nothing stopped two captures for the same shop order from running at the same time. Both tabs checked \"not paid yet\" before either one had captured, so both captured and both confirmed. The PayPal-Request-Id on capture was also a new random UUID on every call, so a retry wasn't idempotent.\n\n**Fix**\n- **Server keeps its own record:** `POST /api/paypal/orders` now stores each PayPal order it creates, with its shop order id and the amount and currency from the Printful order. The capture endpoint refuses any PayPal order id not in that record (404, `action: \"fail\"`) before it calls PayPal, so a `custom_id` alone no longer counts.\n- **Amount checks:** before capturing, the PayPal order's `custom_id`, amount and currency must match that record. Afte",
+     "note": null,
+     "harness": false
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 1",
+     "commit": "156318c",
+     "at": "2026-10-17T08:03:33.210Z",
+     "pass": 21,
+     "fail": [
+      {
+       "id": "two-tabs (production mode)",
+       "reason": "expected order 9000011 paid once; it is draft (I6)"
+      }
+     ],
+     "buildError": false,
+     "note": "the two-tabs failure was the sandbox buyer timing out (low buyer balance, SEPA mandate page), not the shop; the harness now reports this as inconclusive",
+     "harness": true
+    },
+    {
+     "kind": "fix",
+     "step": "fix round 2",
+     "commit": "1bba0f7",
+     "at": "2026-10-17T08:05:52.268Z",
+     "byHand": false,
+     "turns": 29,
+     "seconds": 139,
+     "skills": [],
+     "summary": "I made a fix, but I couldn't check it: running `node --check` and `git diff` was blocked by permissions. I haven't run anything, and the change isn't committed (round 1 was). The two-tabs (production) scenario still needs a fresh proof run.\n\n**Cause.** The PayPal order was created with `payment_source.paypal.experience_context` (brand, no-shipping, PAY_NOW) but no `return_url` or `cancel_url`. That's why PayPal had both orders at `PAYER_ACTION_REQUIRED`: the buyer had to approve on PayPal's full-page approval screen (`webapps/hermes`). When approval happens there rather than in a popup, PayPal needs a return URL to send the buyer back to. Without one the page has nowhere to go, so both tabs timed out at hermes. With nothing approved, both captures correctly got `ORDER_NOT_APPROVED` (422, `payer-action`) and the shop order correctly stayed draft. So nothing was charged and the money handling was right; the buyer just could never finish paying. The frontend's `presentationMode: 'auto'` can switch to this full-page approval too, so real buyers could get stuck the same way.\n\n**Fix:**\n- **`server.js`, `POST /api/paypal/orders`:** the order now sets `returnUrl` and `cancelUrl` to the shop's own order page, `<shop>/order/<shopOrderId>`. The shop address comes from a new optional `SHOP_URL` setting, or from the request's protocol and host if it isn't set. I added `SHOP_URL` to `.env.te",
+     "note": "chased that harness failure: added a return_url the shop did not need",
+     "harness": true
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 2",
+     "commit": "1bba0f7",
+     "at": "2026-10-17T08:27:59.161Z",
+     "pass": 5,
+     "fail": [
+      {
+       "id": "happy (demo mode)",
+       "reason": "expected order 9000001 paid once; it is draft (I6)"
+      },
+      {
+       "id": "happy-ui (demo mode)",
+       "reason": "expected order 9000002 paid once; it is draft (I6)"
+      },
+      {
+       "id": "declined-retry (demo mode)",
+       "reason": "expected order 9000004 paid once; it is draft (I6)"
+      },
+      {
+       "id": "duplicate (demo mode)",
+       "reason": "expected order 9000005 paid once; it is draft (I6)"
+      },
+      {
+       "id": "server-error-retry (demo mode)",
+       "reason": "expected order 9000009 paid once; it is draft (I6)"
+      },
+      {
+       "id": "lost-response (demo mode)",
+       "reason": "expected order 9000010 paid once; it is draft (I6)"
+      },
+      {
+       "id": "two-tabs (demo mode)",
+       "reason": "expected order 9000011 paid once; it is draft (I6)"
+      },
+      {
+       "id": "happy (production mode)",
+       "reason": "expected order 9000001 paid once; it is draft (I6)"
+      },
+      {
+       "id": "happy-ui (production mode)",
+       "reason": "expected order 9000002 paid once; it is draft (I6)"
+      },
+      {
+       "id": "declined-retry (production mode)",
+       "reason": "expected order 9000004 paid once; it is draft (I6)"
+      },
+      {
+       "id": "duplicate (production mode)",
+       "reason": "expected order 9000005 paid once; it is draft (I6)"
+      },
+      {
+       "id": "currency (production mode)",
+       "reason": "scenario error: browser.newContext: Target page, context or browser has been closed"
+      },
+      {
+       "id": "amount (production mode)",
+       "reason": "scenario error: browser.newContext: Target page, context or browser has been closed"
+      },
+      {
+       "id": "create-refused (production mode)",
+       "reason": "scenario error: browser.newPage: Target page, context or browser has been closed"
+      },
+      {
+       "id": "server-error-retry (production mode)",
+       "reason": "scenario error: browser.newContext: Target page, context or browser has been closed"
+      },
+      {
+       "id": "lost-response (production mode)",
+       "reason": "scenario error: browser.newContext: Target page, context or browser has been closed"
+      },
+      {
+       "id": "two-tabs (production mode)",
+       "reason": "scenario error: browser.newContext: Target page, context or browser has been closed"
+      }
+     ],
+     "buildError": false,
+     "note": "all buyer approvals timed out on the SEPA mandate page (harness), not a shop failure",
+     "harness": true
+    },
+    {
+     "kind": "fix",
+     "step": "fix round 3",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:30:21.789Z",
+     "byHand": false,
+     "turns": 26,
+     "seconds": 143,
+     "skills": [],
+     "summary": "I've removed the change from round 2 that most likely caused this, but I haven't confirmed it: I couldn't run anything, and git history was blocked, so I worked it out from the evidence and file timestamps. It needs the next proof run to confirm.\n\n**Cause.** In 16 of the 17 failures the buyer never got past PayPal's approval page. The login works, then clicking \"approve\" times out over and over. That happens in every flow that needs approval, in both modes, and PayPal still shows every order as `PAYER_ACTION_REQUIRED` with no captures. These scenarios passed in earlier rounds. The one thing that changed in how orders are created is in the round-2 files (`server.js`, `.env.template` and `docker-compose.yml`, all modified at the round-2 commit time). That round added a `SHOP_URL` setting and put a `returnUrl`/`cancelUrl` on every order, pointing at the shop's own order page. With those set, the sandbox approval page doesn't let the buyer approve. I'm inferring that from timing; I couldn't see the old diff to prove it.\n\n**Fix.** I put order creation back to how it was before round 2:\n- `server.js`: the order no longer sends `returnUrl`/`cancelUrl`, and the `SHOP_URL` lookup is gone. Brand name, no-shipping, \"Pay Now\", the amount from the server's own Printful record and the request id are unchanged.\n- I took `SHOP_URL` out of `.env.template` and `docker-compose.yml`.\n- I didn't to",
+     "note": "reverted its round-2 return_url change",
+     "harness": true
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:31:57.946Z",
+     "pass": 0,
+     "fail": [],
+     "buildError": true,
+     "note": null,
+     "harness": true
+    },
+    {
+     "kind": "fix",
+     "step": "fix round 1",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:32:25.838Z",
+     "byHand": false,
+     "turns": 6,
+     "seconds": 28,
+     "skills": [],
+     "summary": "The shop's code didn't cause this failure, so I haven't changed any code.\n\n**Cause:** this was a port clash. The log (`…/2026-10-17T08-31-49-upgraded-plain-demo/shop.log`) has two crashes, both `EADDRINUSE`:\n1. The harness's own Printful stub (`harness/printful-stub.mjs:49`) couldn't listen on **4302**. That happened before the shop was involved.\n2. The shop (`server.js:530`, which listens on the `PORT` the harness gives it) couldn't listen on **3302**.\n\nBoth ports are still taken by other `node` processes right now: pid 636897 holds 3302 and pid 636889 holds 4302. Most likely they are left over from an earlier proof run (round 3 ran demo and production mode) that never shut down, or a proof running at the same time. I tried to look up those processes but the command needed approval, so I couldn't confirm which.",
+     "note": "harness: a killed earlier run left the shop holding its port; the model correctly changed nothing. Ports are now checked before start",
+     "harness": true
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 1",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:32:34.107Z",
+     "pass": 0,
+     "fail": [],
+     "buildError": true,
+     "note": null,
+     "harness": true
+    },
+    {
+     "kind": "fix",
+     "step": "fix round 2",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:32:59.619Z",
+     "byHand": false,
+     "turns": 6,
+     "seconds": 25,
+     "skills": [],
+     "summary": "I checked the log. This crash came from the environment, not from the upgrade code, so I haven't changed anything.\n\n**Cause.** `shop.log` shows two processes crashing the same way, and only one of them is the shop:\n1. The harness's own Printful stub (`harness/printful-stub.mjs:49`) died with `EADDRINUSE :::4302`.\n2. Then the shop (`server.js:530`) died with `EADDRINUSE :::3302`.\n\nThe shop listens on the `PORT` the harness passes it (`app.listen(process.env.PORT || 3001)`), and that hasn't changed since the earlier rounds, which built and started fine. `ss -ltnp` shows both ports are still held by older `node` processes: PID 636897 on 3302 and PID 636889 on 4302. These are most likely the shop and stub left running by an earlier proof run that didn't clean up. The harness stub failing on its own port is what rules out the shop code as the cause.",
+     "note": "harness: a killed earlier run left the shop holding its port; the model correctly changed nothing. Ports are now checked before start",
+     "harness": true
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 2",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:33:07.700Z",
+     "pass": 0,
+     "fail": [],
+     "buildError": true,
+     "note": null,
+     "harness": true
+    },
+    {
+     "kind": "prove",
+     "step": "prove round 0",
+     "commit": "a8a0129",
+     "at": "2026-10-17T08:40:45.688Z",
+     "pass": 22,
+     "fail": [],
+     "buildError": false,
+     "note": "Later re-runs of this commit: 1; 1 had reds: 9 sandbox-buyer approval timeouts and 5 harness errors (Cannot read properties of undefined; fetch failed), while another proof of this shop ran on the same ports, none from the shop. The harness now reports such errors as inconclusive and runs one proof per shop at a time (loop log).",
+     "harness": false
+    }
+   ],
+   "later": {
+    "commit": "a8a0129",
+    "at": "2026-10-19T10:05:48.680Z",
+    "added": [
+     "currency-own",
+     "amount-own",
+     "payer-action",
+     "capture-refused",
+     "restart-approved",
+     "restart-pending"
+    ],
+    "modes": [
+     {
+      "mode": "demo",
+      "pass": 13,
+      "na": 1,
+      "inconclusive": 0,
+      "total": 18,
+      "fail": [
+       {
+        "id": "payer-action",
+        "title": "PayPal demands a buyer step on capture (PAYER_ACTION_REQUIRED, mocked): the shop sends the buyer to the order's own payer-action link, and a later capture of the same order succeeds",
+        "simulated": false,
+        "reason": "the shop answered HTTP 200 to a capture PayPal refused with PAYER_ACTION_REQUIRED (expected a 4xx with action \"payer-action\")"
+       },
+       {
+        "id": "capture-refused",
+        "title": "PayPal refuses the capture three ways (TRANSACTION_REFUSED, COMPLIANCE_VIOLATION, MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED, mocked)",
+        "simulated": false,
+        "reason": "expected order 9000014 not paid; shop says pending (I6)"
+       },
+       {
+        "id": "restart-approved",
+        "title": "Shop restarts between the buyer's approval and the capture",
+        "simulated": false,
+        "reason": "expected order 9000015 paid once; it is draft (I6)"
+       },
+       {
+        "id": "restart-pending",
+        "title": "Shop restarts while PayPal holds the payment (pending, SIMULATED): no second payment, and PayPal's completion still confirms the order once",
+        "simulated": false,
+        "reason": "buyer was charged (1BT49155F40723322 62.00 EUR) but shop order 9000016 is not confirmed (I4)"
+       }
+      ]
+     },
+     {
+      "mode": "production",
+      "pass": 13,
+      "na": 1,
+      "inconclusive": 0,
+      "total": 18,
+      "fail": [
+       {
+        "id": "payer-action",
+        "title": "PayPal demands a buyer step on capture (PAYER_ACTION_REQUIRED, mocked): the shop sends the buyer to the order's own payer-action link, and a later capture of the same order succeeds",
+        "simulated": false,
+        "reason": "the shop answered HTTP 200 to a capture PayPal refused with PAYER_ACTION_REQUIRED (expected a 4xx with action \"payer-action\")"
+       },
+       {
+        "id": "capture-refused",
+        "title": "PayPal refuses the capture three ways (TRANSACTION_REFUSED, COMPLIANCE_VIOLATION, MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED, mocked)",
+        "simulated": false,
+        "reason": "expected order 9000014 not paid; shop says pending (I6)"
+       },
+       {
+        "id": "restart-approved",
+        "title": "Shop restarts between the buyer's approval and the capture",
+        "simulated": false,
+        "reason": "expected order 9000015 paid once; it is draft (I6)"
+       },
+       {
+        "id": "restart-pending",
+        "title": "Shop restarts while PayPal holds the payment (pending, SIMULATED): no second payment, and PayPal's completion still confirms the order once",
+        "simulated": false,
+        "reason": "buyer was charged (8G998224SG940250Y 62.00 EUR) but shop order 9000016 is not confirmed (I4)"
+       }
+      ]
+     }
+    ]
+   }
+  }
+ ],
+ "catches": [
+  {
+   "arm": "",
+   "failId": "two-tabs",
+   "failMode": "demo",
+   "after": {
+    "step": "fix by hand (review r1 A7)",
+    "commit": "e47e7bd",
+    "byHand": true
+   },
+   "red": {
+    "commit": "e47e7bd",
+    "at": "2026-10-19T07:38:59.346Z",
+    "pass": 27,
+    "fail": [
+     {
+      "id": "two-tabs (demo mode)",
+      "reason": "2 completed captures for shop order 9000014: 0TG628623J5721737, 3N277234VH1857443 (I5)"
+     }
+    ],
+    "cell": {
+     "verdict": "FAIL",
+     "reasons": [
+      "2 completed captures for shop order 9000014: 0TG628623J5721737, 3N277234VH1857443 (I5)",
+      "shop answered 502 (5xx) on call 3 (I5)"
+     ],
+     "cause": null,
+     "simulated": null,
+     "seconds": 60.3,
+     "shopOrderId": "9000014",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "pending",
+     "shopPaid": true,
+     "paypal": [
+      {
+       "orderId": "3KP42362BX4899725",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "0TG628623J5721737",
+         "status": "COMPLETED",
+         "amount": "62.00 EUR"
+        }
+       ]
+      },
+      {
+       "orderId": "5U490490X3841163X",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "3N277234VH1857443",
+         "status": "COMPLETED",
+         "amount": "62.00 EUR"
+        }
+       ]
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 502
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [
+      "f649075ea0aa2",
+      "f5133095017fd",
+      "f9630424c0de5",
+      "f195735bd5a83"
+     ],
+     "notes": [
+      "buyer approved 3KP42362BX4899725",
+      "buyer approved 5U490490X3841163X",
+      "both tabs completed at the same time"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-two-tabs-order-9000014.png",
+     "timeline": null
+    },
+    "cells": {}
+   },
+   "fix": {
+    "step": "fix round 1",
+    "commit": "90473e7",
+    "at": "2026-10-19T07:44:05.130Z",
+    "turns": 27,
+    "seconds": 246,
+    "costUsd": 1.07132873,
+    "summary": "I fixed the two-tabs failure in `server.js` and `frontend/src/components/order/Payment.js`. Nothing was run besides `node --check server.js`, which passes; the sandbox proof has to be rerun to confirm the fix. I couldn't commit because the commit command was denied, so the changes are uncommitted in the working tree.\n\n**Cause.** The capture call for tab 1's PayPal order (`3KP…`) failed with no PayPal answer (`PAYPAL_UNREACHABLE`), but PayPal had in fact captured it. The server looked the order up once, saw no capture yet, answered 502 and then treated the shop order as unpaid. When tab 2's capture got its turn, nothing blocked it, so it captured a second PayPal order (`5U…`). The buyer was charged twice, and the first charge was never confirmed.\n\n**Fix:**\n- **Retry with the same request id.** When a capture's outcome is unknown (no answer, a 5xx, or `PREVIOUS_REQUEST_IN_PROGRESS` / `DUPLICATE_REQUEST_ID`), the server retries it up to twice, after 1s and 3s, with the same `PayPal-Request-Id`. PayPal then replays the first capture instead of charging again; an `ORDER_ALREADY_CAPTURED` answer leads to an order lookup. In this scenario, tab 1 should now end `COMPLETED` and tab 2 get `409 ALREADY_PAID`.\n- **Block other PayPal orders while the outcome is unknown.** If the outcome is still unknown after the retries, the server remembers that PayPal order for the shop order (`uncertain"
+   },
+   "green": {
+    "commit": "90473e7",
+    "at": "2026-10-19T07:52:41.645Z",
+    "pass": 28,
+    "fail": 0,
+    "inconclusive": 0,
+    "harnessNote": null,
+    "cell": {
+     "verdict": "PASS",
+     "reasons": [],
+     "cause": null,
+     "simulated": null,
+     "seconds": 29.8,
+     "shopOrderId": "9000014",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "pending",
+     "shopPaid": true,
+     "paypal": [
+      {
+       "orderId": "7X922800R5384724A",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "57399449H7193280A",
+         "status": "COMPLETED",
+         "amount": "62.00 EUR"
+        }
+       ]
+      },
+      {
+       "orderId": "65470276267480216",
+       "status": "APPROVED",
+       "captures": []
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 409
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [
+      "f80559324daf0",
+      "f7584749345d7",
+      "ca4ce2e100e4d"
+     ],
+     "notes": [
+      "buyer approved 7X922800R5384724A",
+      "buyer approved 65470276267480216",
+      "both tabs completed at the same time"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-two-tabs-order-9000014-50f094.png",
+     "timeline": null
+    }
+   }
+  },
+  {
+   "arm": "",
+   "failId": "restart-pending",
+   "failMode": "demo",
+   "after": {
+    "step": "revert (harness)",
+    "commit": "eb50069",
+    "byHand": false
+   },
+   "red": {
+    "commit": "eb50069",
+    "at": "2026-10-19T08:46:59.759Z",
+    "pass": 28,
+    "fail": [
+     {
+      "id": "payer-action (demo mode)",
+      "reason": "the refusal carries no payer_action_url (PayPal's link for 96C08947LE7518947 was https://www.sandbox.paypal.com/checkoutnow?token=96C08947LE7518947&cp_link=paypal)"
+     },
+     {
+      "id": "restart-approved (demo mode)",
+      "reason": "expected order 9000015 paid once; it is draft (I6)"
+     },
+     {
+      "id": "restart-pending (demo mode)",
+      "reason": "buyer was charged (78K3713051717480B 62.00 EUR) but shop order 9000016 is not confirmed (I4)"
+     },
+     {
+      "id": "payer-action (production mode)",
+      "reason": "the refusal carries no payer_action_url (PayPal's link for 8EK04802HC7241413 was https://www.sandbox.paypal.com/checkoutnow?token=8EK04802HC7241413&cp_link=paypal)"
+     },
+     {
+      "id": "restart-approved (production mode)",
+      "reason": "expected order 9000015 paid once; it is draft (I6)"
+     },
+     {
+      "id": "restart-pending (production mode)",
+      "reason": "buyer was charged (8BH64274PE085264K 62.00 EUR) but shop order 9000016 is not confirmed (I4)"
+     }
+    ],
+    "cell": {
+     "verdict": "FAIL",
+     "reasons": [
+      "buyer was charged (78K3713051717480B 62.00 EUR) but shop order 9000016 is not confirmed (I4)",
+      "expected order 9000016 paid once; it is draft (I6)",
+      "after the restart a second payment was allowed (HTTP 200, PayPal order 2NR52051174505828)",
+      "after the restart, PayPal's completed capture did not confirm the order (status draft)"
+     ],
+     "cause": "shop",
+     "simulated": null,
+     "seconds": 22,
+     "shopOrderId": "9000016",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "draft",
+     "shopPaid": false,
+     "paypal": [
+      {
+       "orderId": "7SG66812U2482603H",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "78K3713051717480B",
+         "status": "COMPLETED",
+         "amount": "62.00 EUR"
+        }
+       ]
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders (again, after the restart)",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 404
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [
+      "f299566d7802d",
+      "f2995668fb170",
+      "f96524265222b",
+      "f6013489a61a5"
+     ],
+     "notes": [
+      "buyer approved 7SG66812U2482603H",
+      "shop process restarted while the capture was pending"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-restart-pending-order-9000016-6258da.png",
+     "timeline": [
+      {
+       "t": 15.4,
+       "step": "capture answered PENDING (SIMULATED; the real capture completed)"
+      },
+      {
+       "t": 15.9,
+       "step": "shop process restarted"
+      },
+      {
+       "t": 17.2,
+       "step": "buyer's return page asked the shop to complete the order"
+      }
+     ]
+    },
+    "cells": {
+     "payer-action": {
+      "verdict": "FAIL",
+      "reasons": [
+       "the refusal carries no payer_action_url (PayPal's link for 96C08947LE7518947 was https://www.sandbox.paypal.com/checkoutnow?token=96C08947LE7518947&cp_link=paypal)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 19.9,
+      "shopOrderId": "9000013",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "96C08947LE7518947",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "6C010062574660931",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 422
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [
+       "PAYER_ACTION_REQUIRED"
+      ],
+      "harness": [],
+      "debugIds": [
+       "ca4ce78f8ada5",
+       "f638455bf5fd0",
+       "f2036719a8c91"
+      ],
+      "notes": [
+       "buyer approved 96C08947LE7518947",
+       "first capture mocked PAYER_ACTION_REQUIRED; after the buyer's return, the same PayPal order captured unmocked"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-payer-action-order-9000013-6258da.png",
+      "timeline": null
+     },
+     "restart-approved": {
+      "verdict": "FAIL",
+      "reasons": [
+       "expected order 9000015 paid once; it is draft (I6)"
+      ],
+      "cause": "shop",
+      "simulated": null,
+      "seconds": 18.9,
+      "shopOrderId": "9000015",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "draft",
+      "shopPaid": false,
+      "paypal": [
+       {
+        "orderId": "9V0900559B8910302",
+        "status": "APPROVED",
+        "captures": []
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 404
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f5510439dbdbc",
+       "f4921258f2c06"
+      ],
+      "notes": [
+       "buyer approved 9V0900559B8910302",
+       "shop process restarted after the buyer approved",
+       "the return page captured, then a refresh captured again"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-restart-approved-order-9000015-6258da.png",
+      "timeline": null
+     }
+    }
+   },
+   "fix": {
+    "step": "fix round 1",
+    "commit": "af4e134",
+    "at": "2026-10-19T09:27:33.935Z",
+    "turns": 42,
+    "seconds": 221,
+    "costUsd": 1.063935575,
+    "summary": "I fixed the code for all 6 failing scenarios. Nothing has been run against PayPal: I didn't start the server, per your rules, and the linter needed an approval I didn't have. Both server files pass `node --check`. Git commands were blocked in this session, so nothing is committed.\n\n## Cause\n1. **payer-action (both modes):** the server never kept the link PayPal returns when the order is created. So the PAYER_ACTION_REQUIRED refusal had no `payer_action_url` to give, and the browser had nowhere to send the buyer.\n2. **restart-approved and restart-pending (both modes):** which PayPal order belongs to which shop order, the payment states, the handled webhook events and the unanswered captures were all kept only in memory, and so were the DEMO confirmed list. After a restart:\n   - an approved order got `404 UNKNOWN_ORDER`;\n   - a pending payment was forgotten, so a second PayPal order was allowed;\n   - PayPal's later completion was ignored as \"not ours\".\n\n## Fix\n- **`lib/paypal.js`**\n  - `createOrder` now uses `payment_source.paypal.experience_context` instead of the deprecated `application_context`. This is the change that was reverted from the hand commit so it would come from this loop.\n  - A new `payerActionLink(order)` reads PayPal's own link from the create response: `rel` \"payer-action\", or \"approve\" if there is none. The URL is never built by hand.\n- **`server.js`**\n  - Eac"
+   },
+   "green": {
+    "commit": "af4e134",
+    "at": "2026-10-19T09:50:55.052Z",
+    "pass": 32,
+    "fail": 0,
+    "inconclusive": 2,
+    "harnessNote": "production mode: currency and amount INCONCLUSIVE (harness: our buyer's return port 9999 was held by a parallel expressCart proof at start); re-proved at af4e134 outside the loop, 18/18 (runs/simple-clothing-store/2026-10-19T09-51-19-upgraded-production)",
+    "cell": {
+     "verdict": "PASS",
+     "reasons": [],
+     "cause": null,
+     "simulated": null,
+     "seconds": 22.1,
+     "shopOrderId": "9000016",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "pending",
+     "shopPaid": true,
+     "paypal": [
+      {
+       "orderId": "22V79335RP4416003",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "37B97383VS699310V",
+         "status": "COMPLETED",
+         "amount": "62.00 EUR"
+        }
+       ]
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      },
+      {
+       "step": "POST /api/paypal/orders (again, after the restart)",
+       "http": 409
+      },
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [
+      "f75349292f264",
+      "f879402abadab",
+      "f556026a34ffc",
+      "f556026c82c4a"
+     ],
+     "notes": [
+      "buyer approved 22V79335RP4416003",
+      "shop process restarted while the capture was pending",
+      "second checkout after the restart refused: HTTP 409 PAYMENT_PENDING"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-restart-pending-order-9000016.png",
+     "timeline": [
+      {
+       "t": 15.2,
+       "step": "capture answered PENDING (SIMULATED; the real capture completed)"
+      },
+      {
+       "t": 15.7,
+       "step": "shop process restarted"
+      },
+      {
+       "t": 16.9,
+       "step": "buyer's return page asked the shop to complete the order"
+      }
+     ]
+    }
+   }
+  },
+  {
+   "arm": "plain",
+   "failId": "currency",
+   "failMode": "demo",
+   "after": {
+    "step": "upgrade (plain prompt: migrate only)",
+    "commit": "5d4816a",
+    "byHand": false
+   },
+   "red": {
+    "commit": "5d4816a",
+    "at": "2026-10-17T07:52:19.345Z",
+    "pass": 16,
+    "fail": [
+     {
+      "id": "currency (demo mode)",
+      "reason": "shop marked order 9000006 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+     },
+     {
+      "id": "amount (demo mode)",
+      "reason": "shop marked order 9000007 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+     },
+     {
+      "id": "two-tabs (demo mode)",
+      "reason": "2 completed captures for shop order 9000011: 1SN30608UV766654J, 8T655628MN948531N (I5)"
+     },
+     {
+      "id": "currency (production mode)",
+      "reason": "shop marked order 9000006 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+     },
+     {
+      "id": "amount (production mode)",
+      "reason": "shop marked order 9000007 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+     },
+     {
+      "id": "two-tabs (production mode)",
+      "reason": "2 completed captures for shop order 9000011: 3P388277GX669964C, 6B721014DW6341458 (I5)"
+     }
+    ],
+    "cell": {
+     "verdict": "FAIL",
+     "reasons": [
+      "shop marked order 9000006 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)",
+      "expected order 9000006 not paid; shop says pending (I6)"
+     ],
+     "cause": null,
+     "simulated": null,
+     "seconds": 15.9,
+     "shopOrderId": "9000006",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "pending",
+     "shopPaid": true,
+     "paypal": [
+      {
+       "orderId": "9FT172017U7997935",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "5KG71037X88783500",
+         "status": "COMPLETED",
+         "amount": "62.00 MXN"
+        }
+       ]
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 200
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [
+      "f9591637bf01e"
+     ],
+     "notes": [
+      "attacker created 9FT172017U7997935 for 62.00 MXN with custom_id 9000006 (debug f831834dd0bb2)",
+      "buyer approved",
+      "attacker captured: HTTP 201, capture 5KG71037X88783500 COMPLETED 62.00 MXN"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-currency-order-9000006-d23f07.png",
+     "timeline": null
+    },
+    "cells": {
+     "amount": {
+      "verdict": "FAIL",
+      "reasons": [
+       "shop marked order 9000007 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)",
+       "expected order 9000007 not paid; shop says pending (I6)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 16.6,
+      "shopOrderId": "9000007",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "5VR22039JY060933J",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "81594839DJ069572S",
+          "status": "COMPLETED",
+          "amount": "1.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "ca4bdb202bbe5"
+      ],
+      "notes": [
+       "attacker created 5VR22039JY060933J for 1.00 EUR with custom_id 9000007 (debug ca4bdb1c07b18)",
+       "buyer approved",
+       "attacker captured: HTTP 201, capture 81594839DJ069572S COMPLETED 1.00 EUR"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-amount-order-9000007-d23f07.png",
+      "timeline": null
+     },
+     "two-tabs": {
+      "verdict": "FAIL",
+      "reasons": [
+       "2 completed captures for shop order 9000011: 1SN30608UV766654J, 8T655628MN948531N (I5)"
+      ],
+      "cause": null,
+      "simulated": null,
+      "seconds": 32.6,
+      "shopOrderId": "9000011",
+      "shopTotal": "62.00 EUR",
+      "shopBefore": "draft",
+      "shopAfter": "pending",
+      "shopPaid": true,
+      "paypal": [
+       {
+        "orderId": "29X31792PR0580247",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "1SN30608UV766654J",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       },
+       {
+        "orderId": "9HV66106FJ887973H",
+        "status": "COMPLETED",
+        "captures": [
+         {
+          "id": "8T655628MN948531N",
+          "status": "COMPLETED",
+          "amount": "62.00 EUR"
+         }
+        ]
+       }
+      ],
+      "calls": [
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /api/paypal/orders",
+        "http": 201
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       },
+       {
+        "step": "POST /api/paypal/orders/:id/capture",
+        "http": 200
+       }
+      ],
+      "mocked": [],
+      "harness": [],
+      "debugIds": [
+       "f836577ee74c7",
+       "f65107741c8a0",
+       "f815529e8657f",
+       "f815529c6f827"
+      ],
+      "notes": [
+       "buyer approved 29X31792PR0580247",
+       "buyer approved 9HV66106FJ887973H",
+       "both tabs completed at the same time"
+      ],
+      "screenshot": "data/shots/simple-clothing-store/upgraded-demo-two-tabs-order-9000011.png",
+      "timeline": null
+     }
+    }
+   },
+   "fix": {
+    "step": "fix round 1",
+    "commit": "156318c",
+    "at": "2026-10-17T07:53:44.129Z",
+    "turns": 14,
+    "seconds": 85,
+    "costUsd": 0.5457969749999999,
+    "summary": "I fixed all three causes in `server.js`. The file passes a syntax check, but per your constraints I haven't run the server, the build or the proof again, so the 6 scenarios aren't confirmed passing yet.\n\n**Cause**\n- **currency and amount (4 failures):** the capture endpoint trusted the PayPal order's `custom_id` to decide which shop order it paid for. It never checked that this server had created that PayPal order. Its \"already completed\" branch also skipped the amount check. So an order the attacker created and captured themselves (62.00 MXN, or 1.00 EUR) with a matching `custom_id` confirmed the shop order.\n- **two-tabs (2 failures):** nothing stopped two captures for the same shop order from running at the same time. Both tabs checked \"not paid yet\" before either one had captured, so both captured and both confirmed. The PayPal-Request-Id on capture was also a new random UUID on every call, so a retry wasn't idempotent.\n\n**Fix**\n- **Server keeps its own record:** `POST /api/paypal/orders` now stores each PayPal order it creates, with its shop order id and the amount and currency from the Printful order. The capture endpoint refuses any PayPal order id not in that record (404, `action: \"fail\"`) before it calls PayPal, so a `custom_id` alone no longer counts.\n- **Amount checks:** before capturing, the PayPal order's `custom_id`, amount and currency must match that record. Afte"
+   },
+   "green": {
+    "commit": "156318c",
+    "at": "2026-10-17T08:03:33.210Z",
+    "pass": 21,
+    "fail": 1,
+    "inconclusive": 0,
+    "harnessNote": "the two-tabs failure was the sandbox buyer timing out (low buyer balance, SEPA mandate page), not the shop; the harness now reports this as inconclusive",
+    "cell": {
+     "verdict": "PASS",
+     "reasons": [],
+     "cause": null,
+     "simulated": null,
+     "seconds": 15.7,
+     "shopOrderId": "9000006",
+     "shopTotal": "62.00 EUR",
+     "shopBefore": "draft",
+     "shopAfter": "draft",
+     "shopPaid": false,
+     "paypal": [
+      {
+       "orderId": "4B591568Y8289291S",
+       "status": "COMPLETED",
+       "captures": [
+        {
+         "id": "3LU38024E2549025F",
+         "status": "COMPLETED",
+         "amount": "62.00 MXN"
+        }
+       ]
+      }
+     ],
+     "calls": [
+      {
+       "step": "POST /api/paypal/orders/:id/capture",
+       "http": 404
+      }
+     ],
+     "mocked": [],
+     "harness": [],
+     "debugIds": [],
+     "notes": [
+      "attacker created 4B591568Y8289291S for 62.00 MXN with custom_id 9000006 (debug f65139307c157)",
+      "buyer approved",
+      "attacker captured: HTTP 201, capture 3LU38024E2549025F COMPLETED 62.00 MXN"
+     ],
+     "screenshot": "data/shots/simple-clothing-store/upgraded-demo-currency-order-9000006-1be6ca.png",
+     "timeline": null
+    }
+   }
+  }
+ ],
+ "mutations": [
+  {
+   "name": "no-same-money",
+   "description": "modified code (mutation test): the capture money check (sameMoney in checkCapture) was removed by hand for this run only; not the result of commit ea14195",
+   "commit": "ea14195+mutation:no-same-money",
+   "at": "2026-10-19T07:29:05.959Z",
+   "mode": "demo",
+   "results": [
+    {
+     "id": "currency-own",
+     "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 9000001 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+    },
+    {
+     "id": "amount-own",
+     "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 9000002 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+    }
+   ]
+  },
+  {
+   "name": "confirm-on-refusal",
+   "description": "a refused capture no longer stops the confirmation: the shop confirms the order whatever PayPal answered (the original's bug)",
+   "commit": "af4e134+mutation:confirm-on-refusal",
+   "at": "2026-10-19T09:57:35.533Z",
+   "mode": "demo",
+   "results": [
+    {
+     "id": "capture-refused",
+     "title": "PayPal refuses the capture three ways (TRANSACTION_REFUSED, COMPLIANCE_VIOLATION, MAX_NUMBER_OF_PAYMENT_ATTEMPTS_EXCEEDED, mocked)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 9000001 paid; PayPal shows no completed capture: 7XX95574KU316093V APPROVED (no capture) (I2)"
+    }
+   ]
+  },
+  {
+   "name": "no-saved-state",
+   "description": "the saved payment records are not read back at start (fix round 1, af4e134, taken out): a restart forgets every PayPal order, pending payment and handled event",
+   "commit": "af4e134+mutation:no-saved-state",
+   "at": "2026-10-19T09:58:22.446Z",
+   "mode": "demo",
+   "results": [
+    {
+     "id": "restart-approved",
+     "title": "Shop restarts between the buyer's approval and the capture",
+     "verdict": "FAIL",
+     "reason": "expected order 9000001 paid once; it is draft (I6)"
+    },
+    {
+     "id": "restart-pending",
+     "title": "Shop restarts while PayPal holds the payment (pending, SIMULATED): no second payment, and PayPal's completion still confirms the order once",
+     "verdict": "FAIL",
+     "reason": "buyer was charged (69D918161R471802U 62.00 EUR) but shop order 9000002 is not confirmed (I4)"
+    }
+   ]
+  },
+  {
+   "name": "built-payer-link",
+   "description": "the payer-action refusal sends the buyer to a checkout URL the shop builds from the order id, not to the link PayPal gave for the order (the reverted hand commit's fallback)",
+   "commit": "af4e134+mutation:built-payer-link",
+   "at": "2026-10-19T09:58:47.295Z",
+   "mode": "demo",
+   "results": [
+    {
+     "id": "payer-action",
+     "title": "PayPal demands a buyer step on capture (PAYER_ACTION_REQUIRED, mocked): the shop sends the buyer to the order's own payer-action link, and a later capture of the same order succeeds",
+     "verdict": "FAIL",
+     "reason": "the shop sent the buyer to https://www.sandbox.paypal.com/checkoutnow?token=5AE938502K446682G, not to the payer-action link PayPal gave for 5AE938502K446682G (https://www.sandbox.paypal.com/checkoutnow?token=5AE938502K446682G&cp_link=paypal): same address without the harness's tag, so the shop built it itself"
+    }
+   ]
+  },
+  {
+   "name": "no-same-money",
+   "description": "the capture's money check (sameMoney in checkCapture) removed: any captured amount and currency confirm the order",
+   "commit": "af4e134+mutation:no-same-money",
+   "at": "2026-10-19T09:59:34.920Z",
+   "mode": "demo",
+   "results": [
+    {
+     "id": "currency-own",
+     "title": "PayPal reports a cheaper currency (MXN) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 9000001 paid; PayPal captured 62.00 MXN, shop total is 62.00 EUR (I3)"
+    },
+    {
+     "id": "amount-own",
+     "title": "PayPal reports a lower amount (1.00) for the shop's own order (SIMULATED)",
+     "verdict": "FAIL",
+     "reason": "shop marked order 9000002 paid; PayPal captured 1.00 EUR, shop total is 62.00 EUR (I3)"
+    }
+   ]
+  }
+ ]
+}
