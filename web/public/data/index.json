@@ -1,0 +1,189 @@
+{
+ "exportedAt": "2026-10-26T01:55:33.043Z",
+ "aliasMode": false,
+ "targets": [
+  {
+   "slug": "expresscart",
+   "name": "expressCart",
+   "repo": "https://github.com/mrvautin/expressCart",
+   "blurb": "An open-source Node.js shop with MongoDB, about 2.2k GitHub stars. PayPal through the deprecated v1 Payments redirect (paypal-rest-sdk).",
+   "stack": {
+    "before": "Original (v1 Payments redirect, paypal-rest-sdk)",
+    "after": "Upgraded (Orders v2 + JS SDK v6 + paypal-server-sdk)"
+   },
+   "tally": {
+    "before": {
+     "pass": 6,
+     "fail": 4,
+     "na": 5,
+     "inconclusive": 0,
+     "total": 15
+    },
+    "after": {
+     "pass": 15,
+     "fail": 0,
+     "na": 0,
+     "inconclusive": 0,
+     "total": 15
+    }
+   },
+   "failures": [
+    {
+     "id": "cancel-shrink",
+     "code": "E1",
+     "mode": "default",
+     "headline": "The buyer paid €85.00. The shop marked the €480.00 order Paid, with all 8 items in it.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/expresscart/crop-original-default-cancel-shrink-order-6ad3a9877f58f475e18c41b7.png",
+      "caption": "The shop's admin order page: order status and total"
+     }
+    },
+    {
+     "id": "duplicate",
+     "code": "E7",
+     "mode": "default",
+     "headline": "One reload of PayPal's return page crashed the shop process for every customer.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/expresscart/crop-original-default-duplicate-order-6ad3a9d47f58f475e18c41c4.png",
+      "caption": "The shop's admin order page: order status and total"
+     }
+    },
+    {
+     "id": "lost-response",
+     "code": "E8",
+     "mode": "default",
+     "headline": "The buyer was charged €73.00. The shop crashed, came back without PayPal credentials, and never marked the order paid.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/expresscart/crop-original-default-lost-response-order-6ad3aa08d7721c7a32ce63a0.png",
+      "caption": "The shop's admin order page: order status and total"
+     }
+    },
+    {
+     "id": "pending-simulated",
+     "code": "E2",
+     "mode": "default",
+     "headline": "A pending payment, which is not yet money, was marked Paid.",
+     "assumed": null,
+     "simulated": "pending",
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/expresscart/crop-original-default-pending-simulated-order-6ad3aa5e8316de7c149e72ee.png",
+      "caption": "The shop's admin order page: order status and total"
+     }
+    }
+   ],
+   "order": 1
+  },
+  {
+   "slug": "simple-clothing-store",
+   "name": "simple-clothing-store",
+   "repo": "https://github.com/kerkkoh/simple-clothing-store",
+   "blurb": "A small React + Express store with Printful fulfilment. PayPal through JS SDK v5 in the browser and the deprecated @paypal/checkout-server-sdk.",
+   "stack": {
+    "before": "Original (v5 + checkout-server-sdk)",
+    "after": "Upgraded (v6 + paypal-server-sdk)"
+   },
+   "tally": {
+    "before": {
+     "pass": 14,
+     "fail": 12,
+     "na": 10,
+     "inconclusive": 0,
+     "total": 36
+    },
+    "after": {
+     "pass": 35,
+     "fail": 0,
+     "na": 1,
+     "inconclusive": 0,
+     "total": 36
+    }
+   },
+   "failures": [
+    {
+     "id": "unapproved",
+     "code": "D1",
+     "mode": "demo",
+     "headline": "The buyer never approved anything. The shop confirmed the €62.00 order anyway.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/simple-clothing-store/crop-original-demo-unapproved-order-9000002.png",
+      "caption": "The shop's order page: its badge and total"
+     }
+    },
+    {
+     "id": "currency",
+     "code": "D2",
+     "mode": "demo",
+     "headline": "A tampered checkout paid 62.00 MXN. The shop confirmed its €62.00 order.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/simple-clothing-store/crop-original-demo-currency-order-9000005.png",
+      "caption": "The shop's order page: its badge and total"
+     }
+    },
+    {
+     "id": "lost-response",
+     "code": "D3",
+     "mode": "demo",
+     "headline": "The buyer was charged €62.00, but the order was never confirmed.",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/simple-clothing-store/crop-original-demo-lost-response-order-9000010.png",
+      "caption": "The shop's order page: its badge and total"
+     }
+    },
+    {
+     "id": "two-tabs",
+     "mode": "demo",
+     "headline": "Two tabs, one order: the buyer was charged twice (€62.00 + €62.00).",
+     "assumed": null,
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/simple-clothing-store/crop-original-demo-two-tabs-order-9000013.png",
+      "caption": "The shop's order page: its badge and total"
+     }
+    },
+    {
+     "id": "happy",
+     "code": "D7",
+     "mode": "production",
+     "headline": "With its Printful hand-off switched on, every paid order stayed unconfirmed: the buyer was charged €62.00, the order stayed a draft.",
+     "assumed": "Assumed: Printful's real reply to this call was not seen. A local stand-in answered with the 404 Printful's API docs describe for an unknown order ID.",
+     "sameCause": [
+      "happy",
+      "declined-retry",
+      "duplicate",
+      "server-error-retry",
+      "lost-response",
+      "restart-approved",
+      "two-tabs"
+     ],
+     "simulated": null,
+     "afterVerdict": "PASS",
+     "crop": {
+      "src": "data/shots/simple-clothing-store/crop-original-production-happy-order-9000001.png",
+      "caption": "The shop's order page: its badge and total"
+     }
+    }
+   ],
+   "order": 2
+  }
+ ]
+}

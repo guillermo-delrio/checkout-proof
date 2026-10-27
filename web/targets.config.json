@@ -1,0 +1,85 @@
+{
+  "names": "real",
+  "aliasKeepsShots": false,
+  "targets": {
+    "expressCart": {
+      "order": 1,
+      "alias": "Shop E",
+      "aliasSlug": "shop-e",
+      "repo": "https://github.com/mrvautin/expressCart",
+      "blurb": "An open-source Node.js shop with MongoDB, about 2.2k GitHub stars. PayPal through the deprecated v1 Payments redirect (paypal-rest-sdk).",
+      "rerun": false,
+      "shotCrop": {
+        "caption": "The shop's admin order page: order status and total",
+        "rows": [
+          [
+            {
+              "x": 262,
+              "y": 128,
+              "w": 130,
+              "h": 40
+            },
+            {
+              "x": 1025,
+              "y": 128,
+              "w": 210,
+              "h": 40
+            }
+          ],
+          [
+            {
+              "x": 262,
+              "y": 520,
+              "w": 170,
+              "h": 40
+            },
+            {
+              "x": 1140,
+              "y": 520,
+              "w": 90,
+              "h": 40
+            }
+          ]
+        ]
+      }
+    },
+    "simple-clothing-store": {
+      "order": 2,
+      "alias": "Shop S",
+      "aliasSlug": "shop-s",
+      "repo": "https://github.com/kerkkoh/simple-clothing-store",
+      "blurb": "A small React + Express store with Printful fulfilment. PayPal through JS SDK v5 in the browser and the deprecated @paypal/checkout-server-sdk.",
+      "beforeNote": "In the original shop's runs, the harness's own PayPal client plays the browser half (creating and capturing the PayPal order, as the shop's v5 button code does); the shop's own server handles the rest.",
+      "modeNote": "Demo mode is the store's published demo setting (DEMO=1); production mode switches on its Printful order hand-off.",
+      "rerun": true,
+      "shotCrop": {
+        "caption": "The shop's order page: its badge and total",
+        "note": "This shop's pages label every price \"$ USD\"; its orders are in EUR.",
+        "rows": [
+          [
+            {
+              "x": 88,
+              "y": 128,
+              "w": 400,
+              "h": 56
+            }
+          ],
+          [
+            {
+              "x": 655,
+              "y": 328,
+              "w": 115,
+              "h": 28
+            },
+            {
+              "x": 1010,
+              "y": 328,
+              "w": 85,
+              "h": 28
+            }
+          ]
+        ]
+      }
+    }
+  }
+}

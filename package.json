@@ -1,0 +1,28 @@
+{
+  "name": "checkout-proof",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "scripts": {
+    "cp": "tsx src/cli.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "server": "tsx server/index.ts",
+    "export-web": "tsx scripts/export-web-data.ts",
+    "web:build": "npm run export-web && cd web && npm run build"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "mongodb": "^6.21.0",
+    "playwright": "^1.64.1",
+    "tsx": "^4.20.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}
